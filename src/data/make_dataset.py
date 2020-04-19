@@ -18,7 +18,7 @@ def main(input_filepath: str, output_filepath: str, is_train: str) -> None:
         cleaned data ready to be analyzed (saved in ../processed).
     """
     logger = logging.getLogger(__name__)
-    logger.info("making final data set from raw data")
+    logger.info("making interim data set from raw data")
 
     if is_train:
         input_filepath = Path(input_filepath) / "train"
@@ -28,9 +28,14 @@ def main(input_filepath: str, output_filepath: str, is_train: str) -> None:
     dfs = []
     for f in input_files:
         df_tmp = pd.read_csv(f)
-        df_tmp["filename"] = f.name
+        if int(f.stem) < 400:
+            df_tmp["is_screen_play"] = 1
+        else:
+            df_tmp["is_screen_play"] = 0
+        df_tmp["filename"] = f.stem
         dfs.append(df_tmp)
-    df = pd.concat(dfs, axis=1, ignore_index=True)
+    df = pd.concat(dfs, axis=0, ignore_index=True)
+    df = df.sort_values(["filename", "frame"]).reset_index(drop=True)
     del dfs
     gc.collect()
 
