@@ -1,19 +1,44 @@
 # -*- coding: utf-8 -*-
 import click
+import gc
 import logging
 from pathlib import Path
+import pandas as pd
 from dotenv import find_dotenv, load_dotenv
+
+from src.utils import save_joblib
 
 
 @click.command()
 @click.argument("input_filepath", type=click.Path(exists=True))
 @click.argument("output_filepath", type=click.Path())
-def main(input_filepath, output_filepath):
+@click.argument("is_train", type=bool)
+def main(input_filepath: str, output_filepath: str, is_train: str) -> None:
     """ Runs data processing scripts to turn raw data from (../raw) into
         cleaned data ready to be analyzed (saved in ../processed).
     """
     logger = logging.getLogger(__name__)
     logger.info("making final data set from raw data")
+
+    if is_train:
+        input_filepath = Path(input_filepath) / "train"
+    else:
+        input_filepath = Path(input_filepath) / "test"
+    input_files = [*input_filepath.glob("*.csv")]
+    dfs = []
+    for f in input_files:
+        df_tmp = pd.read_csv(f)
+        df_tmp["filename"] = f.name
+        dfs.append(df_tmp)
+    df = pd.concat(dfs, axis=1, ignore_index=True)
+    del dfs
+    gc.collect()
+
+    if is_train:
+        output_filepath = Path(output_filepath) / "train.jbl"
+    else:
+        output_filepath = Path(output_filepath) / "test.jbl"
+    save_joblib(df, output_filepath)
 
 
 if __name__ == "__main__":
