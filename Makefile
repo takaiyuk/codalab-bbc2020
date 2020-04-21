@@ -35,6 +35,14 @@ features: requirements
 	$(PYTHON_INTERPRETER) src/features/build_features.py data/interim data/processed True
 	$(PYTHON_INTERPRETER) src/features/build_features.py data/interim data/processed False
 
+## Make Models
+models: requirements
+	$(PYTHON_INTERPRETER) src/models/train_predict.py
+
+## Make Submit
+submit: requirements
+	$(PYTHON_INTERPRETER) src/submit.py
+
 ## Delete all compiled Python files
 clean:
 	find . -type f -name "*.py[co]" -delete
