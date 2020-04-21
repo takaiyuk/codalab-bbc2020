@@ -38,6 +38,7 @@ def aggregate_players_dists(df: pd.DataFrame) -> pd.DataFrame:
         }
     )
     df_agg.columns = [f"{col[0]}_{col[1]}" for col in df_agg.columns]
+    df_agg.rename(columns={"is_screen_play_mean": "is_screen_play"}, inplace=True)
     return df_agg
 
 

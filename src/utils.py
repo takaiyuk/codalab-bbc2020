@@ -1,6 +1,34 @@
+import hydra
 import joblib
+import os
 import pandas as pd
 from typing import Any, Tuple
+import yaml
+import warnings
+
+warnings.filterwarnings("ignore")
+
+
+def get_hydra_session_id() -> str:
+    """hydra cwd: ${project_path}/outputs/YYYY-mm-dd/HH-MM-SS"""
+    hydra_cwd = os.getcwd()
+    session_id = "-".join(hydra_cwd.split("/")[-2:])
+    return session_id
+
+
+def get_original_cwd() -> str:
+    try:
+        return hydra.utils.get_original_cwd()
+    except AttributeError:
+        return "."
+
+
+def load_yaml(path: str = "./config.yml") -> dict:
+    with open(path) as f:
+        config = yaml.load(f)
+    k_method = config["params"]["kfold"]["method"]
+    assert k_method in ["normal", "stratified", "group"]
+    return config
 
 
 def load_joblib(path: str) -> Any:
@@ -28,3 +56,10 @@ def calc_dists(
     new_col = "dist_" + pos0_col[0].split("_")[0] + "_" + pos1_col[0].split("_")[0]
     df[new_col] = dists
     return df
+
+
+def mkdir(path: str) -> None:
+    try:
+        os.mkdir(path)
+    except FileExistsError:
+        pass

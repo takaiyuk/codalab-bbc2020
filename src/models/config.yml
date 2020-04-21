@@ -1,0 +1,80 @@
+column:
+    target: "is_screen_play"
+mode:
+    seed: 42
+params:
+    kfold:
+        method: "stratified"
+        number: 10
+        stratified: ""
+        group: ""
+    lgb:
+        objective: "binary"
+        boosting_type: "gbdt"
+        num_iterations: 4000
+        learning_rate: 0.05
+        num_leaves: 36
+        tree_learner: "serial"
+        n_jobs: 8
+        seed: 42
+        max_depth: -1
+        min_child_samples: 24
+        subsample: 0.5
+        subsample_freq: 5
+        colsample_bytree: 0.85
+        early_stopping_rounds: 200
+        reg_alpha: 0.5
+        reg_lambda: 0.25
+        min_data_per_group: 100
+        max_cat_threshold: 32
+        cat_l2: 10.0
+        cat_smooth: 10.0
+        metric: "log_loss"
+        verbose: -1
+        device: "cpu"
+        gpu_platform_id: -1
+        gpu_device_id: -1
+    lgb_optuna:
+        objective: "binary"
+        boosting_type: "gbdt"
+        num_iterations: 4000
+        learning_rate: 0.05
+        num_leaves: [31, 127]
+        tree_learner: "serial"
+        n_jobs: 8
+        seed: 42
+        max_depth: -1
+        min_child_samples: [20, 80]
+        subsample: [0.5, 0.9]
+        subsample_freq: [1, 5]
+        colsample_bytree: [0.5, 0.9]
+        early_stopping_rounds: 200
+        reg_alpha: [0.001, 1.0]
+        reg_lambda: [0.001, 10.0]
+        min_data_per_group: 100
+        max_cat_threshold: 32
+        cat_l2: 10.0
+        cat_smooth: 10.0
+        metric: "log_loss"
+        verbose: -1
+        device: "cpu"
+        gpu_platform_id: -1
+        gpu_device_id: -1
+    null_importance:
+        threshold: 10
+    optuna:
+        n_trials: 100
+path:
+    prefix:
+        external: "data/external"
+        interim: "data/interim"
+        processed: "data/processed"
+        raw: "data/raw"
+        importance: "models/importance"
+        model: "models/model"
+        optuna: "models/optuna"
+    train_processed: "data/processed/train.jbl"
+    test_processed: "data/processed/test.jbl"
+skip:
+    feature_select: True
+    optuna: True
