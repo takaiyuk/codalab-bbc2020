@@ -50,7 +50,7 @@ clean:
 
 ## Lint using flake8
 lint:
-	flake8 src
+	flake8 --ignore=E203,E266,E501,W503 src
 
 ## Upload Data to S3
 sync_data_to_s3:
