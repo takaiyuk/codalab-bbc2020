@@ -6,8 +6,8 @@ params:
     kfold:
         method: "stratified"
         number: 10
-        stratified: ""
-        group: ""
+        stratified_column: "is_screen_play"
+        group_column: ""
     lgb:
         objective: "binary"
         boosting_type: "gbdt"
@@ -29,7 +29,7 @@ params:
         max_cat_threshold: 32
         cat_l2: 10.0
         cat_smooth: 10.0
-        metric: "log_loss"
+        metric: "binary_logloss"
         verbose: -1
         device: "cpu"
         gpu_platform_id: -1
@@ -55,7 +55,7 @@ params:
         max_cat_threshold: 32
         cat_l2: 10.0
         cat_smooth: 10.0
-        metric: "log_loss"
+        metric: "binary_logloss"
         verbose: -1
         device: "cpu"
         gpu_platform_id: -1
