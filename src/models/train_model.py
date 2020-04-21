@@ -9,7 +9,7 @@ import numpy as np
 from omegaconf import DictConfig, ListConfig
 import pandas as pd
 import seaborn as sns
-from sklearn.metrics import accuracy_score, log_loss
+from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
 from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
 from typing import Generator, Tuple
 
@@ -29,6 +29,10 @@ def postprocess(pred: np.array, X: pd.DataFrame) -> np.array:
 
 def ACC(y_true: np.array, y_pred: np.array) -> float:
     return round(accuracy_score(y_true, y_pred), 6)
+
+
+def AUC(y_true: np.array, y_pred: np.array) -> float:
+    return round(roc_auc_score(y_true, y_pred), 6)
 
 
 def LOGLOSS(y_true: np.array, y_pred: np.array) -> float:
@@ -264,6 +268,7 @@ class LGBModel(BaseModel):
         self._optimize_threshold(y_true, y_pred)
         y_pred_binary = np.where(y_pred > self.best_threshold, 1, 0)
         scores["acc"] = ACC(y_true, y_pred_binary)
+        scores["auc"] = AUC(y_true, y_pred_binary)
         scores["log_loss"] = LOGLOSS(y_true, y_pred)
         return scores
 
