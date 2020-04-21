@@ -1,4 +1,4 @@
-bbc
+codalab-bbc2020
 ==============================
 
 Basketball Behavior Challenge: BBC2020 https://competitions.codalab.org/competitions/23905#learn_the_details
