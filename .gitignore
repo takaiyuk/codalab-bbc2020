@@ -94,3 +94,5 @@ outputs
 models/importance
 models/model
 submit
+test_prediction.csv
+test_prediction.zip
