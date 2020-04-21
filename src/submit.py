@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-import click
 import logging
+import os
 import pandas as pd
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 
 from src.utils import (
-    get_hydra_session_id,
     get_original_cwd,
     load_joblib,
     load_yaml,
@@ -14,18 +13,17 @@ from src.utils import (
 )
 
 
-@click.command()
-@click.argument("session_id", type=str)
-def main(session_id: str) -> None:
+def main() -> None:
     """ Runs modeling scripts to train and predict from processed data from (../processed). """
     logger = logging.getLogger(__name__)
     logger.info("making submission data set from predicted data")
     config = load_yaml()
 
     cwd = get_original_cwd()
-    if session_id == "":
-        session_id = get_hydra_session_id()
     model_prefix = config["path"]["prefix"]["model"]
+    model_filepath = sorted(os.listdir(f"{cwd}/{model_prefix}"), reverse=True)[0]
+    session_id = model_filepath.split("_")[-1].replace(".jbl", "")
+    logger.info(f"session_id: {session_id}")
     pred_test = load_joblib(
         f"{cwd}/{model_prefix}/lgb_model_pred_test_binary_{session_id}.jbl"
     )
