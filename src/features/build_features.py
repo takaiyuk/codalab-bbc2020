@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 from dotenv import find_dotenv, load_dotenv
 
+from src.visualization.visualize import hoop_xy
 from src.utils import load_joblib, save_joblib, calc_dists
 
 
@@ -12,39 +13,86 @@ scr_cols = ("scr_x", "scr_y")
 usr_cols = ("usr_x", "usr_y")
 uDF_cols = ("uDF_x", "uDF_y")
 ball_cols = ("bal_x", "bal_y")
+hoop_cols = ("hoop_x", "hoop_y")
 
 
-def calc_players_dists(df: pd.DataFrame) -> pd.DataFrame:
-    df = calc_dists(df, usr_cols, scr_cols)
-    df = calc_dists(df, usr_cols, uDF_cols)
-    df = calc_dists(df, scr_cols, uDF_cols)
-    df = calc_dists(df, usr_cols, ball_cols)
-    df = calc_dists(df, scr_cols, ball_cols)
-    df = calc_dists(df, uDF_cols, ball_cols)
-    return df
-
-
-def aggregate_players_dists(df: pd.DataFrame) -> pd.DataFrame:
-    agg_methods = ["mean", "min", "max", "std"]
-    df_agg = df.groupby("filename").agg(
-        {
-            "is_screen_play": ["mean"],
-            "dist_usr_scr": agg_methods,
-            "dist_usr_uDF": agg_methods,
-            "dist_scr_uDF": agg_methods,
-            "dist_usr_bal": agg_methods,
-            "dist_scr_bal": agg_methods,
-            "dist_uDF_bal": agg_methods,
-        }
-    )
-    df_agg.columns = [f"{col[0]}_{col[1]}" for col in df_agg.columns]
-    df_agg.rename(columns={"is_screen_play_mean": "is_screen_play"}, inplace=True)
+def aggregate_target(df: pd.DataFrame) -> pd.DataFrame:
+    df_agg = df.groupby("filename").agg({"is_screen_play": ["mean"]})
+    df_agg.columns = [f"{col[0]}" for col in df_agg.columns]
     return df_agg
 
 
+class PlayerDist:
+    def __init__(self) -> None:
+        pass
+
+    def calc(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = calc_dists(df, usr_cols, scr_cols)
+        df = calc_dists(df, usr_cols, uDF_cols)
+        df = calc_dists(df, scr_cols, uDF_cols)
+        df = calc_dists(df, usr_cols, ball_cols)
+        df = calc_dists(df, scr_cols, ball_cols)
+        df = calc_dists(df, uDF_cols, ball_cols)
+        return df
+
+    def aggregate(self, df: pd.DataFrame) -> pd.DataFrame:
+        agg_methods = ["mean", "min", "max", "std", "median"]
+        df_agg = df.groupby("filename").agg(
+            {
+                "dist_usr_scr": agg_methods,
+                "dist_usr_uDF": agg_methods,
+                "dist_scr_uDF": agg_methods,
+                "dist_usr_bal": agg_methods,
+                "dist_scr_bal": agg_methods,
+                "dist_uDF_bal": agg_methods,
+            }
+        )
+        df_agg.columns = [f"{col[0]}_{col[1]}" for col in df_agg.columns]
+        return df_agg
+
+
+class HoopDist:
+    def __init__(self) -> None:
+        pass
+
+    def calc(self, df: pd.DataFrame) -> pd.DataFrame:
+        df["hoop_x"] = hoop_xy[0]
+        df["hoop_y"] = hoop_xy[1]
+
+        df = calc_dists(df, usr_cols, hoop_cols)
+        df = calc_dists(df, scr_cols, hoop_cols)
+        df = calc_dists(df, uDF_cols, hoop_cols)
+        df["dist_diff_usr_scr_hoop"] = df["dist_usr_hoop"] - df["dist_scr_hoop"]
+        df["dist_diff_usr_uDF_hoop"] = df["dist_usr_hoop"] - df["dist_uDF_hoop"]
+        return df
+
+    def aggregate(self, df: pd.DataFrame) -> pd.DataFrame:
+        agg_methods = ["mean", "min", "max", "std", "median"]
+        df_agg = df.groupby("filename").agg(
+            {
+                "dist_usr_hoop": agg_methods,
+                "dist_scr_hoop": agg_methods,
+                "dist_uDF_hoop": agg_methods,
+                "dist_diff_usr_scr_hoop": agg_methods,
+                "dist_diff_usr_uDF_hoop": agg_methods,
+            }
+        )
+        df_agg.columns = [f"{col[0]}_{col[1]}" for col in df_agg.columns]
+        return df_agg
+
+
 def preprocess(df: pd.DataFrame, is_train: bool) -> pd.DataFrame:
-    df = calc_players_dists(df)
-    df_agg = aggregate_players_dists(df)
+    df_agg_target = aggregate_target(df)
+
+    pdist = PlayerDist()
+    df = pdist.calc(df)
+    df_agg_player = pdist.aggregate(df)
+
+    hdist = HoopDist()
+    df = hdist.calc(df)
+    df_agg_hoop = hdist.aggregate(df)
+
+    df_agg = pd.concat((df_agg_target, df_agg_player, df_agg_hoop), axis=1)
     return df_agg
 
 
