@@ -144,6 +144,7 @@ class BaseModel:
             del X_train, y_train, X_valid, y_valid, self.model
             gc.collect()
         valid_score_all = self._evaluate(y, self.pred_valid)
+        self.logger.info(f"Best Threshold: {self.best_threshold}")
         self.valid_score_acc = valid_score_all["acc"]
         self.logger.info(
             f"cv score: {self.valid_score_acc}\t(std: {np.std([d['acc'] for d in valid_scores])})"
@@ -182,6 +183,8 @@ class BaseModel:
         model_prefix = self.config["path"]["prefix"]["model"]
         mkdir(f"{cwd}/{model_prefix}")
 
+        pred_test_binary = np.where(self.pred_test > self.best_threshold, 1, 0)
+
         save_joblib(
             self.features, f"{cwd}/{model_prefix}/lgb_model_features_{session_id}.jbl",
         )
@@ -195,6 +198,10 @@ class BaseModel:
         save_joblib(
             self.pred_test,
             f"{cwd}/{model_prefix}/lgb_model_pred_test_{session_id}.jbl",
+        )
+        save_joblib(
+            pred_test_binary,
+            f"{cwd}/{model_prefix}/lgb_model_pred_test_binary_{session_id}.jbl",
         )
         save_joblib(
             self.session_id,

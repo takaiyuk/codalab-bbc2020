@@ -13,18 +13,18 @@ params:
         boosting_type: "gbdt"
         num_iterations: 4000
         learning_rate: 0.05
-        num_leaves: 36
+        num_leaves: 31
         tree_learner: "serial"
         n_jobs: 8
         seed: 42
         max_depth: -1
-        min_child_samples: 24
-        subsample: 0.5
-        subsample_freq: 5
-        colsample_bytree: 0.85
+        min_child_samples: 20
+        subsample: 0.9
+        subsample_freq: 1
+        colsample_bytree: 0.9
         early_stopping_rounds: 200
-        reg_alpha: 0.5
-        reg_lambda: 0.25
+        reg_alpha: 0.01
+        reg_lambda: 0.01
         min_data_per_group: 100
         max_cat_threshold: 32
         cat_l2: 10.0
@@ -73,8 +73,11 @@ path:
         importance: "models/importance"
         model: "models/model"
         optuna: "models/optuna"
+        submit: "submit"
     train_processed: "data/processed/train.jbl"
     test_processed: "data/processed/test.jbl"
 skip:
     feature_select: True
     optuna: True
+submit:
+    session_id: ""
