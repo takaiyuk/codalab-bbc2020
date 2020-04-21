@@ -9,7 +9,7 @@ ADD requirements.txt $APP_HOME
 ADD setup.py $APP_HOME
 RUN mkdir /root/.kaggle \
   && apt-get -y update \
-  && apt-get -y install clang cmake git nodejs npm vim \
+  && apt-get -y install clang cmake git nodejs npm vim zip \
   && git clone --recursive https://github.com/microsoft/LightGBM && cd LightGBM && mkdir build && cd build && cmake .. && make -j4 && cd ../python-package && python setup.py install && cd ../.. && rm -r LightGBM \
   && git clone --recursive https://github.com/dmlc/xgboost && cd xgboost && mkdir build && cd build && cmake .. && make -j$(nproc) && cd ../python-package && python setup.py install && cd ../.. && rm -r xgboost \
   && pip install -r requirements.txt \
