@@ -5,23 +5,26 @@ from omegaconf import DictConfig
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 
-from src.models.train_model import LGBModel
-from src.utils import load_joblib
+from src.models.train_model import LGBModel, preprocess
+from src.utils import load_joblib, get_original_cwd
 
 
-@hydra.main(config_path="config.yml")
+@hydra.main(config_path="../../config.yml")
 def main(config: DictConfig) -> None:
     """ Runs modeling scripts to train and predict from processed data from (../processed). """
     logger = logging.getLogger(__name__)
     logger.info("making processed data set from interim data")
 
-    input_prefix = config["path"]["prefix"]["processed"]
+    cwd = get_original_cwd()
+    input_prefix = Path(cwd) / config["path"]["prefix"]["processed"]
     train_input_filepath = Path(input_prefix) / "train.jbl"
     test_input_filepath = Path(input_prefix) / "test.jbl"
     train = load_joblib(train_input_filepath)
     test = load_joblib(test_input_filepath)
 
-    lgb_model = LGBModel()
+    train = preprocess(train)
+    test = preprocess(test)
+    lgb_model = LGBModel(config, logger)
     lgb_model.kfold_fit_predict(train, test)
     lgb_model.plot_feature_importance(model_type="lgb")
     lgb_model.save_model()

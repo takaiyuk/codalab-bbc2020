@@ -9,16 +9,17 @@ import numpy as np
 from omegaconf import DictConfig, ListConfig
 import pandas as pd
 import seaborn as sns
-from sklearn.metrics import accuracy_score, logloss_score
+from sklearn.metrics import accuracy_score, log_loss
 from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
 from typing import Generator, Tuple
 
-from src.utils import get_original_cwd, get_hydra_session_id, save_jbl
+from src.utils import get_original_cwd, get_hydra_session_id, save_joblib, mkdir
 
 
 def preprocess(
-    df: pd.DataFrame, config: DictConfig, is_train: bool = False
+    df: pd.DataFrame, config: DictConfig = None, is_train: bool = False
 ) -> pd.DataFrame:
+    df.reset_index(drop=True, inplace=True)
     return df
 
 
@@ -31,7 +32,7 @@ def ACC(y_true: np.array, y_pred: np.array) -> float:
 
 
 def LOGLOSS(y_true: np.array, y_pred: np.array) -> float:
-    return round(logloss_score(y_true, y_pred))
+    return round(log_loss(y_true, y_pred), 6)
 
 
 class BaseModel:
@@ -44,13 +45,18 @@ class BaseModel:
         self.session_id = get_hydra_session_id()
 
         self.target_column = config["column"]["target"]
+        self.cat_columns = None
         self.model = None
         self.models = []
         self.features = []
         self.pred_valid = np.array([])
         self.pred_test = np.array([])
         self.valid_scores = {}
+
         self.lgb_params = config["params"]["lgb"]
+        self.kfold_method = config["params"]["kfold"]["method"]
+        self.kfold_number = config["params"]["kfold"]["number"]
+        self.str_column = config["params"]["kfold"]["stratified_column"]
 
         self.writer = MlflowWriter(self.session_id)
 
@@ -138,8 +144,10 @@ class BaseModel:
             del X_train, y_train, X_valid, y_valid, self.model
             gc.collect()
         valid_score_all = self._evaluate(y, self.pred_valid)
-        self.valid_score_all = valid_score_all
-        self.logger.info(f"cv score: {valid_score_all}\t(std: {np.std(valid_scores)})")
+        self.valid_score_acc = valid_score_all["acc"]
+        self.logger.info(
+            f"cv score: {self.valid_score_acc}\t(std: {np.std([d['acc'] for d in valid_scores])})"
+        )
 
     def _kfold_feature_importance(
         self, model_type: str, top_features: int = 60
@@ -150,7 +158,8 @@ class BaseModel:
         self, model_type: str, save: bool = True, suffix: str = ""
     ) -> None:
         cwd = get_original_cwd()
-        importance_prefix = self.config["path"]["prefix"]["model"]
+        importance_prefix = self.config["path"]["prefix"]["importance"]
+        mkdir(f"{cwd}/{importance_prefix}")
 
         df_fi = self._kfold_feature_importance(model_type)
         sns.set()
@@ -171,25 +180,23 @@ class BaseModel:
         session_id = self.session_id
         cwd = get_original_cwd()
         model_prefix = self.config["path"]["prefix"]["model"]
-        save_jbl(
-            self.model.best_iteration_,
-            f"{cwd}/{model_prefix}/lgb_model_best_iteration_{session_id}.jbl",
-        )
-        save_jbl(
+        mkdir(f"{cwd}/{model_prefix}")
+
+        save_joblib(
             self.features, f"{cwd}/{model_prefix}/lgb_model_features_{session_id}.jbl",
         )
-        save_jbl(
+        save_joblib(
             self.params, f"{cwd}/{model_prefix}/lgb_model_params_{session_id}.jbl",
         )
-        save_jbl(
+        save_joblib(
             self.pred_valid,
             f"{cwd}/{model_prefix}/lgb_model_pred_valid_{session_id}.jbl",
         )
-        save_jbl(
+        save_joblib(
             self.pred_test,
             f"{cwd}/{model_prefix}/lgb_model_pred_test_{session_id}.jbl",
         )
-        save_jbl(
+        save_joblib(
             self.session_id,
             f"{cwd}/{model_prefix}/lgb_model_session_id_{session_id}.jbl",
         )
@@ -224,11 +231,11 @@ class LGBModel(BaseModel):
         w: np.array = None,
         eval_w: np.array = None,
     ) -> None:
-        self.model = lgb.LGBMRegressor(**self.params["lgb"])
+        self.model = lgb.LGBMClassifier(**self.params["lgb"])
         self.model.fit(
             X_train,
             y_train,
-            sample_weight=w,
+            # sample_weight=w,
             categorical_feature=self.cat_columns,
             eval_set=[(X_train, y_train), (X_valid, y_valid)],
             eval_names=["train", "valid"],
