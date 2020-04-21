@@ -42,6 +42,7 @@ models: requirements
 ## Make Submit
 submit: requirements
 	$(PYTHON_INTERPRETER) src/submit.py
+	./submit.sh
 
 ## Delete all compiled Python files
 clean:
