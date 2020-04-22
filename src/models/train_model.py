@@ -282,6 +282,7 @@ class LGBModel(BaseModel):
                 y_pred_binary = np.where(y_pred > t, 1, 0)
                 score = accuracy_score(y_true, y_pred_binary)
                 if score > best_score:
+                    best_score = score
                     self.best_threshold = t
 
     def _kfold_feature_importance(
