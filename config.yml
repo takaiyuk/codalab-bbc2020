@@ -29,7 +29,7 @@ params:
         max_cat_threshold: 32
         cat_l2: 10.0
         cat_smooth: 10.0
-        metric: "auc"
+        metric: "binary_logloss"
         verbose: -1
         device: "cpu"
         gpu_platform_id: -1
