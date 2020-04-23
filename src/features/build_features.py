@@ -22,6 +22,51 @@ def aggregate_target(df: pd.DataFrame) -> pd.DataFrame:
     return df_agg
 
 
+class BaseAggregator:
+    def __init__(self, calc_columns: list):
+        self.calc_cols = calc_columns
+
+    def calc(self, df: pd.DataFrame) -> pd.DataFrame:
+        raise NotImplementedError
+
+    def shift(self, df: pd.DataFrame) -> pd.DataFrame:
+        df_shift = df.loc[:, self.calc_cols].shift(fill_value=0)
+        df_shift.rename(
+            columns={col: f"{col}_shift" for col in df_shift.columns}, inplace=True
+        )
+        df = pd.concat((df, df_shift), axis=1)
+        for col in self.calc_cols:
+            df[f"{col}_shift_diff"] = df[f"{col}"] - df[f"{col}_shift"]
+        return df
+
+    def aggregate(self, df: pd.DataFrame) -> pd.DataFrame:
+        agg_methods = ["mean", "min", "max", "std", "median"]
+
+        df_agg = df.groupby("filename").agg(
+            {col: agg_methods for col in self.calc_cols}
+        )
+        df_agg.columns = [f"{col[0]}_{col[1]}" for col in df_agg.columns]
+        df_agg_shift = df.groupby("filename").agg(
+            {f"{col}_shift": agg_methods for col in self.calc_cols}
+        )
+        df_agg_shift.columns = [f"{col[0]}_{col[1]}" for col in df_agg_shift.columns]
+        df_agg_shift_diff = df.groupby("filename").agg(
+            {f"{col}_shift_diff": agg_methods for col in self.calc_cols}
+        )
+        df_agg_shift_diff.columns = [
+            f"{col[0]}_{col[1]}" for col in df_agg_shift_diff.columns
+        ]
+
+        df_agg = pd.concat((df_agg, df_agg_shift, df_agg_shift_diff), axis=1)
+        return df_agg
+
+    def run(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = self.calc(df)
+        df = self.shift(df)
+        df_agg = self.aggregate(df)
+        return df_agg
+
+
 class PlayerDist:
     def __init__(self) -> None:
         pass
