@@ -129,12 +129,14 @@ class PlayerArea(BaseAggregator):
     def calc(self, df: pd.DataFrame) -> pd.DataFrame:
         pos_cols = list(scr_cols) + list(usr_cols) + list(uDF_cols)
         pos_dict_list = df.loc[:, pos_cols].to_dict(orient="records")
+        areas = []
         for pos_dict in pos_dict_list:
             p0 = (pos_dict["scr_x"], pos_dict["scr_y"])
             p1 = (pos_dict["usr_x"], pos_dict["usr_y"])
             p2 = (pos_dict["uDF_x"], pos_dict["uDF_y"])
             area = self._calc_triangle_area(p0, p1, p2)
-            df["player_area"] = area
+            areas.append(area)
+        df["player_area"] = areas
         return df
 
 
