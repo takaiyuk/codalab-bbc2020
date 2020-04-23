@@ -67,9 +67,17 @@ class BaseAggregator:
         return df_agg
 
 
-class PlayerDist:
+class PlayerDist(BaseAggregator):
     def __init__(self) -> None:
-        pass
+        dist_cols = [
+            "dist_usr_scr",
+            "dist_usr_uDF",
+            "dist_scr_uDF",
+            "dist_usr_bal",
+            "dist_scr_bal",
+            "dist_uDF_bal",
+        ]
+        super().__init__(dist_cols)
 
     def calc(self, df: pd.DataFrame) -> pd.DataFrame:
         df = calc_dists(df, usr_cols, scr_cols)
@@ -80,61 +88,17 @@ class PlayerDist:
         df = calc_dists(df, uDF_cols, ball_cols)
         return df
 
-    def shift(self, df: pd.DataFrame) -> pd.DataFrame:
-        dist_cols = [
-            "dist_usr_scr",
-            "dist_usr_uDF",
-            "dist_scr_uDF",
-            "dist_usr_bal",
-            "dist_scr_bal",
-            "dist_uDF_bal",
-        ]
-        df_shift = df.loc[:, dist_cols].shift(fill_value=0)
-        df_shift.rename(
-            columns={col: f"{col}_shift" for col in df_shift.columns}, inplace=True
-        )
-        df = pd.concat((df, df_shift), axis=1)
-        for col in dist_cols:
-            df[f"{col}_shift_diff"] = df[f"{col}"] - df[f"{col}_shift"]
-        return df
 
-    def aggregate(self, df: pd.DataFrame) -> pd.DataFrame:
-        dist_cols = [
-            "dist_usr_scr",
-            "dist_usr_uDF",
-            "dist_scr_uDF",
-            "dist_usr_bal",
-            "dist_scr_bal",
-            "dist_uDF_bal",
-        ]
-        agg_methods = ["mean", "min", "max", "std", "median"]
-
-        df_agg = df.groupby("filename").agg({col: agg_methods for col in dist_cols})
-        df_agg.columns = [f"{col[0]}_{col[1]}" for col in df_agg.columns]
-        df_agg_shift = df.groupby("filename").agg(
-            {f"{col}_shift": agg_methods for col in dist_cols}
-        )
-        df_agg_shift.columns = [f"{col[0]}_{col[1]}" for col in df_agg_shift.columns]
-        df_agg_shift_diff = df.groupby("filename").agg(
-            {f"{col}_shift_diff": agg_methods for col in dist_cols}
-        )
-        df_agg_shift_diff.columns = [
-            f"{col[0]}_{col[1]}" for col in df_agg_shift_diff.columns
-        ]
-
-        df_agg = pd.concat((df_agg, df_agg_shift, df_agg_shift_diff), axis=1)
-        return df_agg
-
-    def run(self, df: pd.DataFrame) -> pd.DataFrame:
-        df = self.calc(df)
-        df = self.shift(df)
-        df_agg_player = self.aggregate(df)
-        return df_agg_player
-
-
-class HoopDist:
+class HoopDist(BaseAggregator):
     def __init__(self) -> None:
-        pass
+        dist_cols = [
+            "dist_usr_hoop",
+            "dist_scr_hoop",
+            "dist_uDF_hoop",
+            "dist_diff_usr_scr_hoop",
+            "dist_diff_usr_uDF_hoop",
+        ]
+        super().__init__(dist_cols)
 
     def calc(self, df: pd.DataFrame) -> pd.DataFrame:
         df["hoop_x"] = hoop_xy[0]
@@ -147,59 +111,13 @@ class HoopDist:
         df["dist_diff_usr_uDF_hoop"] = df["dist_usr_hoop"] - df["dist_uDF_hoop"]
         return df
 
-    def shift(self, df: pd.DataFrame) -> pd.DataFrame:
-        dist_cols = [
-            "dist_usr_hoop",
-            "dist_scr_hoop",
-            "dist_uDF_hoop",
-            "dist_diff_usr_scr_hoop",
-            "dist_diff_usr_uDF_hoop",
-        ]
-        df_shift = df.loc[:, dist_cols].shift(fill_value=0)
-        df_shift.rename(
-            columns={col: f"{col}_shift" for col in df_shift.columns}, inplace=True
-        )
-        df = pd.concat((df, df_shift), axis=1)
-        for col in dist_cols:
-            df[f"{col}_shift_diff"] = df[f"{col}"] - df[f"{col}_shift"]
-        return df
 
-    def aggregate(self, df: pd.DataFrame) -> pd.DataFrame:
-        dist_cols = [
-            "dist_usr_hoop",
-            "dist_scr_hoop",
-            "dist_uDF_hoop",
-            "dist_diff_usr_scr_hoop",
-            "dist_diff_usr_uDF_hoop",
-        ]
-        agg_methods = ["mean", "min", "max", "std", "median"]
-
-        df_agg = df.groupby("filename").agg({col: agg_methods for col in dist_cols})
-        df_agg.columns = [f"{col[0]}_{col[1]}" for col in df_agg.columns]
-        df_agg_shift = df.groupby("filename").agg(
-            {f"{col}_shift": agg_methods for col in dist_cols}
-        )
-        df_agg_shift.columns = [f"{col[0]}_{col[1]}" for col in df_agg_shift.columns]
-        df_agg_shift_diff = df.groupby("filename").agg(
-            {f"{col}_shift_diff": agg_methods for col in dist_cols}
-        )
-        df_agg_shift_diff.columns = [
-            f"{col[0]}_{col[1]}" for col in df_agg_shift_diff.columns
-        ]
-
-        df_agg = pd.concat((df_agg, df_agg_shift, df_agg_shift_diff), axis=1)
-        return df_agg
-
-    def run(self, df: pd.DataFrame) -> pd.DataFrame:
-        df = self.calc(df)
-        df = self.shift(df)
-        df_agg_hoop = self.aggregate(df)
-        return df_agg_hoop
-
-
-class PlayerArea:
+class PlayerArea(BaseAggregator):
     def __init__(self):
-        pass
+        area_cols = [
+            "player_area",
+        ]
+        super().__init__(area_cols)
 
     def _calc_triangle_area(self, p0: tuple, p1: tuple, p2: tuple) -> float:
         """http://blog.livedoor.jp/portal8/archives/1619626.html"""
@@ -218,47 +136,6 @@ class PlayerArea:
             area = self._calc_triangle_area(p0, p1, p2)
             df["player_area"] = area
         return df
-
-    def shift(self, df: pd.DataFrame) -> pd.DataFrame:
-        area_cols = [
-            "player_area",
-        ]
-        df_shift = df.loc[:, area_cols].shift(fill_value=0)
-        df_shift.rename(
-            columns={col: f"{col}_shift" for col in df_shift.columns}, inplace=True
-        )
-        df = pd.concat((df, df_shift), axis=1)
-        for col in area_cols:
-            df[f"{col}_shift_diff"] = df[f"{col}"] - df[f"{col}_shift"]
-        return df
-
-    def aggregate(self, df: pd.DataFrame) -> pd.DataFrame:
-        area_cols = [
-            "player_area",
-        ]
-        agg_methods = ["mean", "min", "max", "std", "median"]
-
-        df_agg = df.groupby("filename").agg({col: agg_methods for col in area_cols})
-        df_agg.columns = [f"{col[0]}_{col[1]}" for col in df_agg.columns]
-        df_agg_shift = df.groupby("filename").agg(
-            {f"{col}_shift": agg_methods for col in area_cols}
-        )
-        df_agg_shift.columns = [f"{col[0]}_{col[1]}" for col in df_agg_shift.columns]
-        df_agg_shift_diff = df.groupby("filename").agg(
-            {f"{col}_shift_diff": agg_methods for col in area_cols}
-        )
-        df_agg_shift_diff.columns = [
-            f"{col[0]}_{col[1]}" for col in df_agg_shift_diff.columns
-        ]
-
-        df_agg = pd.concat((df_agg, df_agg_shift, df_agg_shift_diff), axis=1)
-        return df_agg
-
-    def run(self, df: pd.DataFrame) -> pd.DataFrame:
-        df = self.calc(df)
-        df = self.shift(df)
-        df_agg = self.aggregate(df)
-        return df_agg
 
 
 def preprocess(df: pd.DataFrame, is_train: bool) -> pd.DataFrame:
