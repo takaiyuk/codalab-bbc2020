@@ -152,12 +152,77 @@ class HoopDist:
         return df_agg_hoop
 
 
+class PlayerArea:
+    def __init__(self):
+        pass
+
+    def _calc_triangle_area(self, p0: tuple, p1: tuple, p2: tuple) -> float:
+        """http://blog.livedoor.jp/portal8/archives/1619626.html"""
+        area = (
+            p0[0] * (p1[1] - p2[1]) + p1[0] * (p2[1] - p0[1]) + p2[0] * (p0[1] - p1[1])
+        ) * 0.5
+        return area
+
+    def calc(self, df: pd.DataFrame) -> pd.DataFrame:
+        pos_cols = list(scr_cols) + list(usr_cols) + list(uDF_cols)
+        pos_dict_list = df.loc[:, pos_cols].to_dict(orient="records")
+        for pos_dict in pos_dict_list:
+            p0 = (pos_dict["scr_x"], pos_dict["scr_y"])
+            p1 = (pos_dict["usr_x"], pos_dict["usr_y"])
+            p2 = (pos_dict["uDF_x"], pos_dict["uDF_y"])
+            area = self._calc_triangle_area(p0, p1, p2)
+            df["player_area"] = area
+        return df
+
+    def shift(self, df: pd.DataFrame) -> pd.DataFrame:
+        area_cols = [
+            "player_area",
+        ]
+        df_shift = df.loc[:, area_cols].shift(fill_value=0)
+        df_shift.rename(
+            columns={col: f"{col}_shift" for col in df_shift.columns}, inplace=True
+        )
+        df = pd.concat((df, df_shift), axis=1)
+        for col in area_cols:
+            df[f"{col}_shift_diff"] = df[f"{col}"] - df[f"{col}_shift"]
+        return df
+
+    def aggregate(self, df: pd.DataFrame) -> pd.DataFrame:
+        area_cols = [
+            "player_area",
+        ]
+        agg_methods = ["mean", "min", "max", "std", "median"]
+
+        df_agg = df.groupby("filename").agg({col: agg_methods for col in area_cols})
+        df_agg.columns = [f"{col[0]}_{col[1]}" for col in df_agg.columns]
+        df_agg_shift = df.groupby("filename").agg(
+            {f"{col}_shift": agg_methods for col in area_cols}
+        )
+        df_agg_shift.columns = [f"{col[0]}_{col[1]}" for col in df_agg_shift.columns]
+        df_agg_shift_diff = df.groupby("filename").agg(
+            {f"{col}_shift_diff": agg_methods for col in area_cols}
+        )
+        df_agg_shift_diff.columns = [
+            f"{col[0]}_{col[1]}" for col in df_agg_shift_diff.columns
+        ]
+
+        df_agg = pd.concat((df_agg, df_agg_shift, df_agg_shift_diff), axis=1)
+        return df_agg
+
+    def run(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = self.calc(df)
+        df = self.shift(df)
+        df_agg = self.aggregate(df)
+        return df_agg
+
+
 def preprocess(df: pd.DataFrame, is_train: bool) -> pd.DataFrame:
     df_agg_target = aggregate_target(df)
     df_agg_player = PlayerDist().run(df)
     df_agg_hoop = HoopDist().run(df)
+    df_agg_area = PlayerArea().run(df)
 
-    df_agg = pd.concat((df_agg_target, df_agg_player, df_agg_hoop), axis=1)
+    df_agg = pd.concat((df_agg_target, df_agg_player, df_agg_hoop, df_agg_area), axis=1)
     return df_agg
 
 
