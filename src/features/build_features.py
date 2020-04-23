@@ -102,22 +102,52 @@ class HoopDist:
         df["dist_diff_usr_uDF_hoop"] = df["dist_usr_hoop"] - df["dist_uDF_hoop"]
         return df
 
-    def aggregate(self, df: pd.DataFrame) -> pd.DataFrame:
-        agg_methods = ["mean", "min", "max", "std", "median"]
-        df_agg = df.groupby("filename").agg(
-            {
-                "dist_usr_hoop": agg_methods,
-                "dist_scr_hoop": agg_methods,
-                "dist_uDF_hoop": agg_methods,
-                "dist_diff_usr_scr_hoop": agg_methods,
-                "dist_diff_usr_uDF_hoop": agg_methods,
-            }
+    def shift(self, df: pd.DataFrame) -> pd.DataFrame:
+        dist_cols = [
+            "dist_usr_hoop",
+            "dist_scr_hoop",
+            "dist_uDF_hoop",
+            "dist_diff_usr_scr_hoop",
+            "dist_diff_usr_uDF_hoop",
+        ]
+        df_shift = df.loc[:, dist_cols].shift(fill_value=0)
+        df_shift.rename(
+            columns={col: f"{col}_shift" for col in df_shift.columns}, inplace=True
         )
+        df = pd.concat((df, df_shift), axis=1)
+        for col in dist_cols:
+            df[f"{col}_shift_diff"] = df[f"{col}"] - df[f"{col}_shift"]
+        return df
+
+    def aggregate(self, df: pd.DataFrame) -> pd.DataFrame:
+        dist_cols = [
+            "dist_usr_hoop",
+            "dist_scr_hoop",
+            "dist_uDF_hoop",
+            "dist_diff_usr_scr_hoop",
+            "dist_diff_usr_uDF_hoop",
+        ]
+        agg_methods = ["mean", "min", "max", "std", "median"]
+
+        df_agg = df.groupby("filename").agg({col: agg_methods for col in dist_cols})
         df_agg.columns = [f"{col[0]}_{col[1]}" for col in df_agg.columns]
+        df_agg_shift = df.groupby("filename").agg(
+            {f"{col}_shift": agg_methods for col in dist_cols}
+        )
+        df_agg_shift.columns = [f"{col[0]}_{col[1]}" for col in df_agg_shift.columns]
+        df_agg_shift_diff = df.groupby("filename").agg(
+            {f"{col}_shift_diff": agg_methods for col in dist_cols}
+        )
+        df_agg_shift_diff.columns = [
+            f"{col[0]}_{col[1]}" for col in df_agg_shift_diff.columns
+        ]
+
+        df_agg = pd.concat((df_agg, df_agg_shift, df_agg_shift_diff), axis=1)
         return df_agg
 
     def run(self, df: pd.DataFrame) -> pd.DataFrame:
         df = self.calc(df)
+        df = self.shift(df)
         df_agg_hoop = self.aggregate(df)
         return df_agg_hoop
 
