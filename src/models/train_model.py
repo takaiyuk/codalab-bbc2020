@@ -1,19 +1,20 @@
 import gc
-import lightgbm as lgb
-from logging import Logger
-import mlflow
-from mlflow.tracking import MlflowClient
 import os
-import matplotlib.pyplot as plt
-import numpy as np
-from omegaconf import DictConfig, ListConfig
-import pandas as pd
-import seaborn as sns
-from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
-from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
+from logging import Logger
 from typing import Generator, Tuple
 
-from src.utils import get_original_cwd, get_hydra_session_id, save_joblib, mkdir
+import lightgbm as lgb
+import matplotlib.pyplot as plt
+import mlflow
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from mlflow.tracking import MlflowClient
+from omegaconf import DictConfig, ListConfig
+from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
+from sklearn.model_selection import GroupKFold, KFold, StratifiedKFold
+
+from src.utils import get_hydra_session_id, get_original_cwd, mkdir, save_joblib
 
 
 def preprocess(
@@ -144,7 +145,9 @@ class BaseModel:
             self.pred_test += pred_te / self.kfold_number
             valid_score = self._evaluate(y_valid, pred_val)
             valid_scores.append(valid_score)
-            self.logger.info(f"fold_idx: {fold_idx+1}\tvalid_score: {valid_score}")
+            self.logger.info(
+                f"fold_idx: {fold_idx+1}\tvalid_score: {valid_score}\tbest_threshold: {self.best_threshold}"
+            )
             del X_train, y_train, X_valid, y_valid, self.model
             gc.collect()
         valid_score_all = self._evaluate(y, self.pred_valid)
