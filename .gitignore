@@ -1,3 +1,29 @@
+# files in data dir (except .gitkeep)
+data/external/*
+data/interim/*
+data/processed/*
+data/raw/* 
+
+# generated
+*.csv
+*.html
+*.ipynb
+*.jbl
+*.jpg
+*.pdf
+*.png
+*.pth
+*.zip
+mlruns/
+models/importance
+models/model
+models/optuna
+models/prediction
+models/pretrained
+outputs/
+submissions/
+kaggle-notebook.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -87,12 +113,3 @@ target/
 
 # Mypy cache
 .mypy_cache/
-
-# Custom
-notebooks/.ipynb_checkpoints/
-outputs
-models/importance
-models/model
-submit
-test_prediction.csv
-test_prediction.zip
