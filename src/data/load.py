@@ -25,6 +25,8 @@ def join_data():
             dfs.append(df_tmp)
         df = pd.concat(dfs, axis=0, ignore_index=True)
         df = df.sort_values(["filename", "frame"]).reset_index(drop=True)
+        if not is_train:
+            df = df.drop("is_screen_play", axis=1)
         del dfs
         gc.collect()
 

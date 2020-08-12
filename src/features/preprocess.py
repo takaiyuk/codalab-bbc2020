@@ -12,12 +12,17 @@ from src.utils.joblib import Jbl
 
 
 def _build_features(df: pd.DataFrame, is_train: bool) -> pd.DataFrame:
-    df_agg_target = aggregate_target(df)
+    df_agg_target = pd.DataFrame()
+    if is_train:
+        df_agg_target = aggregate_target(df)
     df_agg_player = PlayerDist().run(df)
     df_agg_hoop = HoopDist().run(df)
     df_agg_area = PlayerArea().run(df)
 
-    df_agg = pd.concat((df_agg_target, df_agg_player, df_agg_hoop, df_agg_area), axis=1)
+    to_concat = [df_agg_player, df_agg_hoop, df_agg_area]
+    if is_train:
+        to_concat.append(df_agg_target)
+    df_agg = pd.concat(to_concat, axis=1)
     return df_agg
 
 
@@ -34,10 +39,7 @@ def preprocess(fe_cfg: Config):
             X = df_processed.drop(target_col, axis=1)
             y = df_processed[target_col]
         else:
-            if target_col in df_processed.columns:
-                X = df_processed.drop(target_col, axis=1)
-            else:
-                X = df_processed.copy()
+            X = df_processed.copy()
             y = None
         X_save_path = (
             f"{DataPath.processed.X_train}_{fe_name}.jbl"

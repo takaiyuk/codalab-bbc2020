@@ -214,6 +214,9 @@ class TrainRunner(AbstractRunner):
             self.logger.info(
                 f"{self.run_name} fold {i_fold} - end training - score {score}\tbest_iteration: {model.model.best_iteration}"
             )
+            self.logger.info(
+                f"{self.run_name} fold {i_fold} - best threshold - {self.best_threshold}"
+            )
 
             # モデルを保存する
             model.save_model()
