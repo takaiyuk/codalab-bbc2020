@@ -92,12 +92,6 @@ class LGBMOptunaParams:
     gpu_device_id: int = -1
 
 
-# @dataclass
-# class Params:
-#     lgb: LGBMParams = LGBMParams
-#     lgb_optuna: LGBMOptunaParams = LGBMOptunaParams
-
-
 @dataclass
 class Advanced:
     x: int = 1
