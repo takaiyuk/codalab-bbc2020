@@ -14,7 +14,10 @@ def join_data():
     for files, is_train in zip([train_files, test_files], [True, False]):
         dfs = []
         for f in files:
-            path = f"{DataPath.raw.train_dir}/{f}"
+            if is_train:
+                path = f"{DataPath.raw.train_dir}/{f}"
+            else:
+                path = f"{DataPath.raw.test_dir}/{f}"
             df_tmp = pd.read_csv(path)
             stem = os.path.splitext(f)[0]
             if int(stem) < 400:
