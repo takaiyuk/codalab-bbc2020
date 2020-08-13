@@ -6,6 +6,7 @@ import lightgbm as lgb
 import optuna.integration.lightgbm as optuna_lgb
 import pandas as pd
 
+from src.const import ModelPath
 from src.models.model import Model
 from src.utils.joblib import Jbl
 
@@ -68,17 +69,7 @@ class ModelLGBM(Model):
 
 
 class ModelOptunaLGBM(ModelLGBM):
-    def __init__(
-        self,
-        run_fold_name: str,
-        params: dict,
-        categorical_features=None,
-        optuna_path: str = "models/optuna",
-    ):
-        super().__init__(run_fold_name, params, categorical_features)
-        self.optuna_path = optuna_path
-
-    def train(self, tr_x, tr_y, va_x=None, va_y=None, te_x=None):
+    def train(self, tr_x, tr_y, va_x=None, va_y=None):
         # データのセット
         validation = va_x is not None
         lgb_train = optuna_lgb.Dataset(
@@ -87,6 +78,7 @@ class ModelOptunaLGBM(ModelLGBM):
             categorical_feature=self.categorical_features,
             free_raw_data=False,
         )
+        lgb_eval = None
         if validation:
             lgb_eval = optuna_lgb.Dataset(
                 va_x,
@@ -96,11 +88,9 @@ class ModelOptunaLGBM(ModelLGBM):
                 free_raw_data=False,
             )
         # ハイパーパラメータの設定
-        params = dict(self.params)
+        params = dataclasses.asdict(self.params)
         num_round = params.pop("num_boost_round")
-        best_params, tuning_history = dict(), list()
         # 学習
-        lgb_eval = None
         if validation:
             early_stopping_rounds = params.pop("early_stopping_rounds")
             self.model = optuna_lgb.train(
@@ -108,23 +98,16 @@ class ModelOptunaLGBM(ModelLGBM):
                 lgb_train,
                 num_round,
                 valid_sets=[lgb_train, lgb_eval],
-                verbose_eval=1000,
+                verbose_eval=500,
                 early_stopping_rounds=early_stopping_rounds,
-                best_params=best_params,
-                tuning_history=tuning_history,
             )
         else:
             self.model = optuna_lgb.train(
-                params,
-                lgb_train,
-                num_round,
-                valid_sets=[lgb_train],
-                verbose_eval=1000,
-                best_params=best_params,
-                tuning_history=tuning_history,
+                params, lgb_train, num_round, valid_sets=[lgb_train], verbose_eval=500,
             )
-        print(f"Best Params: {best_params}")
+        best_params = self.model.params
+        print(f"Optuna Best Params: {best_params}")
         with open(
-            f"{self.optuna_path}/{self.run_fold_name}_best_params.json", "w"
+            f"{ModelPath.optuna}/{self.run_fold_name}_best_params.json", "w"
         ) as f:
             json.dump(best_params, f, indent=4, separators=(",", ": "))
