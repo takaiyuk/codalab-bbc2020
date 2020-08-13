@@ -67,6 +67,7 @@ class BaseAggregator:
         return df_agg
 
 
+@dataclass
 class PlayerDist(BaseAggregator):
     def __init__(self) -> None:
         dist_cols = [
@@ -89,6 +90,7 @@ class PlayerDist(BaseAggregator):
         return df
 
 
+@dataclass
 class HoopDist(BaseAggregator):
     def __init__(self) -> None:
         dist_cols = [
@@ -112,6 +114,7 @@ class HoopDist(BaseAggregator):
         return df
 
 
+@dataclass
 class PlayerArea(BaseAggregator):
     def __init__(self):
         area_cols = [

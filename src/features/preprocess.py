@@ -11,18 +11,21 @@ from src.features.aggregate import (
 from src.utils.joblib import Jbl
 
 
-def _build_features(df: pd.DataFrame, is_train: bool) -> pd.DataFrame:
-    df_agg_target = pd.DataFrame()
-    if is_train:
-        df_agg_target = aggregate_target(df)
-    df_agg_player = PlayerDist().run(df)
-    df_agg_hoop = HoopDist().run(df)
-    df_agg_area = PlayerArea().run(df)
-
-    to_concat = [df_agg_player, df_agg_hoop, df_agg_area]
-    if is_train:
-        to_concat.append(df_agg_target)
-    df_agg = pd.concat(to_concat, axis=1)
+def _build_features(df: pd.DataFrame, is_train: bool, fe_cfg: Config) -> pd.DataFrame:
+    feature = fe_cfg.feature
+    if fe_cfg.basic.name == "fe000":
+        df_agg_target = pd.DataFrame()
+        if is_train:
+            df_agg_target = aggregate_target(df)
+        df_aggs = []
+        for _, f in feature.__annotations__.items():
+            df_agg_ = f().run(df)
+            df_aggs.append(df_agg_)
+        if is_train:
+            df_aggs.append(df_agg_target)
+        df_agg = pd.concat(df_aggs, axis=1)
+    else:
+        raise Exception(f"{fe_cfg.basic.name} is not implemented")
     return df_agg
 
 
@@ -34,7 +37,7 @@ def preprocess(fe_cfg: Config):
 
     for path, is_train in zip([train_path, test_path], [True, False]):
         df = Jbl.load(path)
-        df_processed = _build_features(df, is_train)
+        df_processed = _build_features(df, is_train, fe_cfg)
         if is_train:
             X = df_processed.drop(target_col, axis=1)
             y = df_processed[target_col]
