@@ -7,6 +7,7 @@ from omegaconf import OmegaConf
 
 from src import config
 from src.config.config import Config
+from src.const import DataPath
 from src.features.runner import FeatureRunner
 from src.models.runner import PredictRunner, TrainRunner
 from src.utils.logger import Logger
@@ -16,6 +17,7 @@ def parse_arg():
     parser = argparse.ArgumentParser()
     parser.add_argument("--fe")
     parser.add_argument("--run")
+    parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
     return args
 
@@ -36,11 +38,25 @@ def load_config(args: argparse.Namespace) -> Dict[str, Config]:
     return {"fe": fe_dict[fe_name].FeConfig, "run": run_dict[run_name].RunConfig}
 
 
-def main(cfgs: Dict[str, Config]):
+def check_exists(fe_name: str) -> bool:
+    is_x_train_exists = os.path.exists(f"{DataPath.processed.X_train}_{fe_name}.jbl")
+    is_y_train_exists = os.path.exists(f"{DataPath.processed.y_train}_{fe_name}.jbl")
+    is_x_test_exists = os.path.exists(f"{DataPath.processed.X_test}_{fe_name}.jbl")
+    if is_x_train_exists and is_y_train_exists and is_x_test_exists:
+        return True
+    else:
+        return False
+
+
+def main(cfgs: Dict[str, Config], is_overwrite: bool):
     logger = Logger()
     warnings.filterwarnings("ignore")
-    logger.info(f'{cfgs["fe"].basic.name} - Process features')
-    FeatureRunner(cfgs).run()
+    # 前処理済みデータが存在しないか上書きオプションが有効のときだけ実行する
+    if not check_exists(cfgs["fe"].basic.name) or is_overwrite:
+        logger.info(f'{cfgs["fe"].basic.name} - Process features')
+        FeatureRunner(cfgs).run()
+    else:
+        logger.info(f'{cfgs["fe"].basic.name} - Skip processing features')
     logger.info(f'{cfgs["run"].basic.name} - Process training')
     TrainRunner(cfgs, logger).run_train_cv()
     logger.info(f'{cfgs["run"].basic.name} - Process prediction')
@@ -54,4 +70,4 @@ if __name__ == "__main__":
     cfgs = load_config(args)
     for _, cfg in cfgs.items():
         print(OmegaConf.structured(cfg).pretty())
-    main(cfgs)
+    main(cfgs, args.overwrite)
