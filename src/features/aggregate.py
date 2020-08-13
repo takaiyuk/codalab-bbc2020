@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Tuple
 
+import numpy as np
 import pandas as pd
 
 from src.utils.utils import calc_dists
@@ -142,4 +143,50 @@ class PlayerArea(BaseAggregator):
             area = self._calc_triangle_area(p0, p1, p2)
             areas.append(area)
         df["player_area"] = areas
+        return df
+
+
+@dataclass
+class PlayerDirection(BaseAggregator):
+    def __init__(self):
+        direct_cols = [
+            "cos_usr_scr",
+            "cos_usr_uDF",
+            "cos_scr_uDF",
+        ]
+        super().__init__(direct_cols)
+
+    def _calc_cos_sim(self, v0: np.array, v1: np.array) -> float:
+        """https://qiita.com/Qiitaman/items/fa393d93ce8e61a857b1"""
+        cos_sim = np.dot(v0, v1) / (np.linalg.norm(v0) * np.linalg.norm(v1))
+        return cos_sim
+
+    def calc(self, df: pd.DataFrame) -> pd.DataFrame:
+        for pos in (BasketColumns.scr, BasketColumns.usr, BasketColumns.uDF):
+            x = pos[0]
+            y = pos[1]
+            df[f"{x}_vec"] = df[x].shift() - df[x]
+            df[f"{y}_vec"] = df[y].shift() - df[y]
+
+        df["cos_usr_scr"] = [
+            self._calc_cos_sim(v0, v1)
+            for v0, v1 in zip(
+                df.loc[:, ["usr_x_vec", "usr_y_vec"]].values,
+                df.loc[:, ["scr_x_vec", "scr_y_vec"]].values,
+            )
+        ]
+        df["cos_usr_uDF"] = [
+            self._calc_cos_sim(v0, v1)
+            for v0, v1 in zip(
+                df.loc[:, ["usr_x_vec", "usr_y_vec"]].values,
+                df.loc[:, ["uDF_x_vec", "uDF_y_vec"]].values,
+            )
+        ]
+        df["cos_scr_uDF"] = [
+            self._calc_cos_sim(v0, v1)
+            for v0, v1 in zip(
+                df.loc[:, ["scr_x_vec", "scr_y_vec"]].values,
+                df.loc[:, ["uDF_x_vec", "uDF_y_vec"]].values,
+            )
+        ]
         return df

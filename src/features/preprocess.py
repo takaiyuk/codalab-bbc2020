@@ -2,18 +2,13 @@ import pandas as pd
 
 from src.config.config import Config
 from src.const import DataPath
-from src.features.aggregate import (
-    HoopDist,
-    PlayerArea,
-    PlayerDist,
-    aggregate_target,
-)
+from src.features.aggregate import aggregate_target
 from src.utils.joblib import Jbl
 
 
 def _build_features(df: pd.DataFrame, is_train: bool, fe_cfg: Config) -> pd.DataFrame:
     feature = fe_cfg.feature
-    if fe_cfg.basic.name == "fe000":
+    if fe_cfg.basic.name in ["fe000", "fe001"]:
         df_agg_target = pd.DataFrame()
         if is_train:
             df_agg_target = aggregate_target(df)
