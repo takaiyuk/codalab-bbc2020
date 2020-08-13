@@ -11,7 +11,7 @@ from src.utils.joblib import Jbl
 
 
 class ModelLGBM(Model):
-    def train(self, tr_x, tr_y, va_x=None, va_y=None, te_x=None):
+    def train(self, tr_x, tr_y, va_x=None, va_y=None):
         # データのセット
         validation = va_x is not None
         lgb_train = lgb.Dataset(
@@ -59,10 +59,12 @@ class ModelLGBM(Model):
         model_path = os.path.join(path, f"{self.run_fold_name}.model")
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
         Jbl.save(self.model, model_path)
+        print(f"{model_path} is saved")
 
     def load_model(self, path: str = "models/model"):
         model_path = os.path.join(path, f"{self.run_fold_name}.model")
         self.model = Jbl.load(model_path)
+        print(f"{model_path} is loaded")
 
 
 class ModelOptunaLGBM(ModelLGBM):
