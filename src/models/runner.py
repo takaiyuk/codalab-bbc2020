@@ -166,7 +166,7 @@ class TrainRunner(AbstractRunner):
 
         # 学習を行う
         model = self.build_model(i_fold)
-        model.train(X_tr, y_tr, X_val, y_val, self.X_test)
+        model.train(X_tr, y_tr, X_val, y_val)
 
         # バリデーションデータへの予測・評価を行う
         pred_val = model.predict(X_val)
@@ -301,7 +301,7 @@ class PredictRunner(AbstractRunner):
         """
 
         self.logger.info(f"{self.run_name} - start prediction cv")
-        X_test = self.X_test
+        X_test = self.X_test.copy()
         preds = []
 
         show_feature_importance = "LGBM" in str(self.model_cls)

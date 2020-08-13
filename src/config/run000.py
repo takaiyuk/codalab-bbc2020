@@ -11,7 +11,6 @@ class Basic:
     name: str = "run000"
     mode: str = "training"
     is_debug: bool = False
-    is_validation: bool = False
     seed: int = 42
 
 
@@ -23,7 +22,7 @@ class Column:
 
 @dataclass
 class Kfold:
-    number: int = 5
+    number: int = 10
     method: str = "stratified"
     str_col: str = ""
     grp_col: str = ""
