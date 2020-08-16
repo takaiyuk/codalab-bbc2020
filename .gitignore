@@ -22,7 +22,7 @@ models/optuna/*
 models/prediction/*
 models/pretrained/*
 outputs/
-submissions/
+submissions/*
 kaggle-notebook.py
 
 # Byte-compiled / optimized / DLL files
