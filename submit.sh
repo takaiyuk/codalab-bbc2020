@@ -1,10 +1,15 @@
 #!/bin/bash
 
-# Generate test_prediction.csv for submission from submit/${session_id}.csv
-ls_submit=$(ls -r submit)
-submits=(${ls_submit// / })
-submission_filepath=${submits[0]}
+# Generate test_prediction.csv for submission from submissions/submission_${run_name}.csv e.g. submission_run000.csv
+run_name=$1
+echo ${run_name}
+submission_filepath=submissions/submission_${run_name}.csv
 
-echo "Generate test_prediction.csv from submit/${submission_filepath}"
-cp submit/${submission_filepath} test_prediction.csv
-zip test_prediction.zip test_prediction.csv
+if [ -f "${submission_filepath}" ]; then
+  echo "Generate test_prediction.csv from ${submission_filepath}"
+  cp ${submission_filepath} test_prediction.csv
+  zip test_prediction.zip test_prediction.csv
+  rm test_prediction.csv
+else
+  echo "${submission_filepath} not exists"
+fi

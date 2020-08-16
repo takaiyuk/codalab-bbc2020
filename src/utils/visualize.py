@@ -1,13 +1,20 @@
-from matplotlib.patches import Arc, Circle, Rectangle
+from dataclasses import dataclass
+from typing import Tuple
+
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.patches import Arc, Circle, Rectangle
 
 
-origin_xy = (0, 0)
-x_length = 47
-y_length = 50
-hoop_xy = (4.75, 25)
-hoop_radius = 0.75
+@dataclass
+class BasketCourt:
+    """unit is feet"""
+
+    origin_xy: Tuple[int, int] = (0, 0)
+    x_length: int = 47
+    y_length: int = 50
+    hoop_xy: Tuple[float, float] = (4.75, 25.0)
+    hoop_radius: float = 0.75
 
 
 class DrawNBACourt:
@@ -35,16 +42,16 @@ class DrawNBACourt:
 
     def _plot_outline(self) -> None:
         self.outer_lines = Rectangle(
-            origin_xy,
-            width=x_length,
-            height=y_length,
+            BasketCourt.origin_xy,
+            width=BasketCourt.x_length,
+            height=BasketCourt.y_length,
             color=self.color,
             linewidth=self.lw,
             fill=False,
         )
 
     def _plot_center_circle(self) -> None:
-        center_circle_xy = (x_length, y_length / 2)
+        center_circle_xy = (BasketCourt.x_length, BasketCourt.y_length / 2)
         center_circle_radius = 6
         self.center_circle = Arc(
             center_circle_xy,
@@ -68,7 +75,7 @@ class DrawNBACourt:
 
         # Three-point arc
         self.three_arc_a = Arc(
-            hoop_xy,
+            BasketCourt.hoop_xy,
             width=23.9 * 2,
             height=23.9 * 2,
             theta1=0,
@@ -78,7 +85,7 @@ class DrawNBACourt:
             fill=False,
         )
         self.three_arc_b = Arc(
-            hoop_xy,
+            BasketCourt.hoop_xy,
             width=23.9 * 2,
             height=23.9 * 2,
             theta1=292,
@@ -146,7 +153,11 @@ class DrawNBACourt:
 
     def _plot_hoop(self):
         self.hoop = Circle(
-            hoop_xy, radius=hoop_radius, color=self.color, linewidth=self.lw, fill=False
+            BasketCourt.hoop_xy,
+            radius=BasketCourt.hoop_radius,
+            color=self.color,
+            linewidth=self.lw,
+            fill=False,
         )
 
     def plot(self) -> Axes:
