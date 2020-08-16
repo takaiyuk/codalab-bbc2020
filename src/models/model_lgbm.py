@@ -58,7 +58,6 @@ class ModelLGBM(Model):
 
     def save_model(self, path: str = "models/model"):
         model_path = os.path.join(path, f"{self.run_fold_name}.model")
-        os.makedirs(os.path.dirname(model_path), exist_ok=True)
         Jbl.save(self.model, model_path)
         print(f"{model_path} is saved")
 
