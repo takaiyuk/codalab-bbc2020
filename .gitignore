@@ -6,6 +6,7 @@ data/raw/*
 
 # generated
 *.csv
+*.gif
 *.html
 *.ipynb
 *.jbl

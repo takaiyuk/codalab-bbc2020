@@ -8,6 +8,8 @@ from matplotlib.patches import Arc, Circle, Rectangle
 
 @dataclass
 class BasketCourt:
+    """unit is feet"""
+
     origin_xy: Tuple[int, int] = (0, 0)
     x_length: int = 47
     y_length: int = 50

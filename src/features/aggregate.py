@@ -7,6 +7,9 @@ import pandas as pd
 from src.utils.utils import calc_dists
 from src.utils.visualize import BasketCourt
 
+# convert feet to meter
+BasketCourt.hoop_xy = (BasketCourt.hoop_xy[0] * 0.3048, BasketCourt.hoop_xy[1] * 0.3048)
+
 
 @dataclass
 class BasketColumns:
