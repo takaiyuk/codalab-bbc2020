@@ -2,7 +2,7 @@
 data/external/*
 data/interim/*
 data/processed/*
-data/raw/* 
+data/raw/*
 
 # generated
 *.csv
@@ -16,11 +16,11 @@ data/raw/*
 *.pth
 *.zip
 mlruns/
-models/importance
-models/model
-models/optuna
-models/prediction
-models/pretrained
+models/importance/*
+models/model/*
+models/optuna/*
+models/prediction/*
+models/pretrained/*
 outputs/
 submissions/
 kaggle-notebook.py
@@ -103,7 +103,7 @@ target/
 .ipynb_checkpoints/
 
 # exclude data from source control by default
-/data/
+# /data/
 
 # Mac OS-specific storage files
 .DS_Store
@@ -114,3 +114,6 @@ target/
 
 # Mypy cache
 .mypy_cache/
+
+# Exclude .gitkeep
+!.gitkeep
