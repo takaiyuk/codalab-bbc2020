@@ -6,8 +6,9 @@ from src.config.config import Config
 
 @dataclass
 class Basic:
-    description: str = "Lightgbm Classfifier"
+    description: str = "Lightgbm Optuna Classfifier"
     exp_name: str = "codalab-bbc2020"
+    fe_name: str = "fe001"
     name: str = "run002"
     mode: str = "training"
     is_debug: bool = False
@@ -94,7 +95,7 @@ class LGBMOptunaParams:
 
 @dataclass
 class Advanced:
-    x: int = 1
+    x: int = 0
 
 
 @dataclass
