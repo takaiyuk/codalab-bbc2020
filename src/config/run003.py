@@ -1,15 +1,11 @@
 from dataclasses import dataclass
 
-from keras.callbacks import ReduceLROnPlateau
-from keras.optimizers import Adam
-from tensorflow.keras.metrics import AUC
-
 from src.config.config import Config
 
 
 @dataclass
 class Basic:
-    description: str = "DNN Classifier"
+    description: str = "Conv1D Classifier"
     exp_name: str = "codalab-bbc2020"
     name: str = "run003"
     mode: str = "training"
@@ -34,7 +30,14 @@ class Kfold:
 @dataclass
 class Model:
     eval_metric: str = "auc"
-    name: str = "ModelNN"
+    name: str = "ModelConv1D"
+
+
+@dataclass
+class NNParams:
+    num_classes: int = 1
+    nb_epoch: int = 10
+    batch_size: int = 32
 
 
 @dataclass
@@ -44,33 +47,27 @@ class Loss:
 
 @dataclass
 class Optimizer:
-    name: Adam = Adam(learning_rate=0.001)
+    name: str = "Adam"
+    learning_rate: float = 0.001
 
 
 @dataclass
 class Scheduler:
-    name: ReduceLROnPlateau = ReduceLROnPlateau(factor=0.1, patience=10)
+    name: str = "ReduceLROnPlateau"
+    factor: float = 0.1
+    patience: int = 10
 
 
 @dataclass
 class Metrics:
-    name: AUC = AUC(num_thresholds=200, curve="ROC")
-
-
-@dataclass
-class NNParams:
-    num_classes: int = 2
-    nb_epoch: int = 2
-    batch_size: int = 32
-    loss: Loss = Loss().name
-    optimizer: Optimizer = Optimizer().name
-    scheduler: Scheduler = Scheduler().name
-    metrics: Metrics = Metrics().name
+    name: str = "AUC"
+    num_thresholds: int = 1000
+    curve: str = "ROC"
 
 
 @dataclass
 class Advanced:
-    pass
+    x: int = 0
 
 
 @dataclass
@@ -80,4 +77,8 @@ class RunConfig(Config):
     kfold: Kfold = Kfold()
     model: Model = Model()
     params: NNParams = NNParams()
+    loss: Loss = Loss()
+    optimizer: Optimizer = Optimizer()
+    scheduler: Scheduler = Scheduler()
+    metrics: Metrics = Metrics()
     advanced: Advanced = Advanced()

@@ -21,6 +21,7 @@ models/model/*
 models/optuna/*
 models/prediction/*
 models/pretrained/*
+models/scaler/*
 outputs/
 submissions/*
 kaggle-notebook.py

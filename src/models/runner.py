@@ -9,7 +9,7 @@ from mlflow import log_artifact, log_metric, log_param
 
 from src.config.config import Config
 from src.const import DataPath, ModelPath
-from src.models import Model, ModelLGBM, ModelOptunaLGBM
+from src.models import Model, ModelConv1D, ModelLGBM, ModelOptunaLGBM
 from src.models.evaluate import evaluate
 from src.models.kfold import generate_cv
 from src.models.optimize import optimize_threshold
@@ -18,6 +18,7 @@ from src.utils.joblib import Jbl
 models_map = {
     "ModelLGBM": ModelLGBM,
     "ModelOptunaLGBM": ModelOptunaLGBM,
+    "ModelConv1D": ModelConv1D,
 }
 
 
@@ -30,6 +31,8 @@ class AbstractRunner:
         self.run_name = run_cfg.basic.name
         self.run_id = None
         self.fe_name = fe_cfg.basic.name
+        self.run_cfg = run_cfg
+        self.params = run_cfg.params
         self.cv = generate_cv(run_cfg)
         self.column = run_cfg.column
         self.cat_cols = (
@@ -38,7 +41,6 @@ class AbstractRunner:
             else None
         )
         self.kfold = run_cfg.kfold
-        self.params = run_cfg.params
         self.evaluation_metric = run_cfg.model.eval_metric
         self.advanced = (
             run_cfg.advanced if "advanced" in run_cfg.__annotations__ else None
@@ -57,7 +59,7 @@ class AbstractRunner:
         """
         # ラン名、fold、モデルのクラスからモデルを作成する
         run_fold_name = f"{self.run_name}-{i_fold}"
-        return self.model_cls(run_fold_name, self.params, self.cat_cols)
+        return self.model_cls(run_fold_name, self.run_cfg, self.cat_cols)
 
     def load_index_fold(self, i_fold: int) -> list:
         """クロスバリデーションでのfoldを指定して対応するレコードのインデックスを返す
@@ -211,9 +213,12 @@ class TrainRunner(AbstractRunner):
             # 学習を行う
             self.logger.info(f"{self.run_name} fold {i_fold} - start training")
             model, va_idx, va_pred, score = self.train_fold(i_fold)
-            self.logger.info(
-                f"{self.run_name} fold {i_fold} - end training - score {score}\tbest_iteration: {model.model.best_iteration}"
+            fold_score_log = (
+                f"{self.run_name} fold {i_fold} - end training - score {score}"
             )
+            if hasattr(model.model, "best_iteration"):
+                fold_score_log += f"\tbest_iteration: {model.model.best_iteration}"
+            self.logger.info(fold_score_log)
             self.logger.info(
                 f"{self.run_name} fold {i_fold} - best threshold - {self.best_threshold}"
             )
@@ -403,6 +408,7 @@ class PredictRunner(AbstractRunner):
             pred = Jbl.load(
                 f"{ModelPath.prediction}/{self.run_name}-test-binarized.jbl"
             )
+        pred = pred.reshape(-1,)
         if self.advanced and "predict_exp" in self.advanced.__annotations__:
             sub[self.column.target] = np.exp(pred)
         else:

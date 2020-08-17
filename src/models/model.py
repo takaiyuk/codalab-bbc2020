@@ -4,15 +4,17 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
+from src.config.config import Config
+
 
 class Model(metaclass=ABCMeta):
     """https://github.com/upura/ayniy/blob/master/ayniy/model/model.py"""
 
     def __init__(
-        self, run_fold_name: str, params: dict, categorical_features=None
+        self, run_fold_name: str, run_cfg: Config, categorical_features=None
     ) -> None:
         self.run_fold_name = run_fold_name
-        self.params = params
+        self.params = run_cfg.params
         self.model = None
         self.categorical_features = categorical_features
 

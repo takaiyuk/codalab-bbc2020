@@ -42,6 +42,7 @@ class ModelPath:
     importance: str = f"{prefix}/importance"
     model: str = f"{prefix}/model"
     optuna: str = f"{prefix}/optuna"
+    scaler: str = f"{prefix}/scaler"
     prediction: str = f"{prefix}/prediction"
     submission: str = "submissions"
 
