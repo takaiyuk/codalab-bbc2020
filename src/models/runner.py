@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Dict, List, Union
 
 import matplotlib.pyplot as plt
@@ -42,10 +43,15 @@ class AbstractRunner:
         )
         self.kfold = run_cfg.kfold
         self.evaluation_metric = run_cfg.model.eval_metric
-        self.advanced = (
-            run_cfg.advanced if "advanced" in run_cfg.__annotations__ else None
-        )
         self.logger = logger
+
+        @dataclass
+        class advanced:
+            PseudoRunner: PseudoRunner = run_cfg.pseudo if "pseudo" in run_cfg.__annotations__ else None
+            ResRunner: ResRunner = run_cfg.res if "res" in run_cfg.__annotations__ else None
+            AdversarialValidation: AdversarialValidation = run_cfg.adcersarial_validation if "adcersarial_validation" in run_cfg.__annotations__ else None
+
+        self.advanced = advanced
 
         if run_cfg.model.name in models_map.keys():
             self.model_cls = models_map[run_cfg.model.name]
@@ -111,8 +117,8 @@ class TrainRunner(AbstractRunner):
         y_train = self.y_train.copy()
 
         # 残差の設定
-        if self.advanced and "ResRunner" in self.advanced.__annotations__:
-            oof = Jbl.load(self.advanced["ResRunner"]["oof"])
+        if self.advanced and self.advanced.ResRunner is not None:
+            oof = Jbl.load(self.advanced.ResRunner.oof)
             X_train["res"] = (y_train - oof).abs()
 
         # 学習データ・バリデーションデータをセットする
@@ -121,7 +127,7 @@ class TrainRunner(AbstractRunner):
         X_val, y_val = X_train.iloc[va_idx], y_train.iloc[va_idx]
 
         # 残差でダウンサンプリング
-        if self.advanced and "ResRunner" in self.advanced.__annotations__:
+        if self.advanced and self.advanced.ResRunner is not None:
             X_tr = X_tr.loc[
                 (X_tr["res"] < self.advanced.ResRunner.res_threshold).values
             ]
@@ -133,9 +139,9 @@ class TrainRunner(AbstractRunner):
             X_val.drop("res", axis=1, inplace=True)
 
         # Pseudo Lebeling
-        if self.advanced and "PseudoRunner" in self.advanced.__annotations__:
+        if self.advanced and self.advanced.PseudoRunner is not None:
             y_test_pred = Jbl.load(self.advanced.PseudoRunner.y_test_pred)
-            if "pl_threshold" in self.advanced.PseudoRunner:
+            if "pl_threshold" in self.advanced.PseudoRunner.__annotations__:
                 X_add = self.X_test.loc[
                     (y_test_pred < self.advanced.PseudoRunner.pl_threshold)
                     | (y_test_pred > 1 - self.advanced.PseudoRunner.pl_threshold)
@@ -196,7 +202,7 @@ class TrainRunner(AbstractRunner):
         preds = []
 
         # Adversarial validation
-        if self.advanced and "adversarial_validation" in self.advanced.__annotations__:
+        if self.advanced and self.advanced.AdversarialValidation is not None:
             X_train = self.X_train.copy()
             X_test = self.X_test.copy()
             X_train["target"] = 0

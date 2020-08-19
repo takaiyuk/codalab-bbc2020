@@ -35,6 +35,7 @@ def load_config(args: argparse.Namespace) -> Dict[str, Config]:
         "run001": config.run001,
         "run002": config.run002,
         "run003": config.run003,
+        "run004": config.run004,
     }
     return {"fe": fe_dict[fe_name].FeConfig, "run": run_dict[run_name].RunConfig}
 
