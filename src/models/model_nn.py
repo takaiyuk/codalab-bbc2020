@@ -26,7 +26,6 @@ class ModelNN(Model):
         self.metrics = run_cfg.metrics
         self.scaler = None
 
-        self._set_params()
         fix_seeds()
 
     def train(self, tr_x, tr_y, va_x=None, va_y=None):
@@ -110,8 +109,7 @@ class ModelConv1D(ModelNN):
             raise ValueError(f"Unknown scheduler: {scheduler_name}")
 
         # metrics = dataclasses.asdict(self.metrics)
-        # # name を渡したいので pop ではなく get で正しい
-        # metrics_name = metrics.get("name")
+        # metrics_name = metrics.pop("name")
         # if metrics_name == "AUC":
         #     self.metrics_func = AUC(**metrics)
         # else:
@@ -119,6 +117,9 @@ class ModelConv1D(ModelNN):
         self.metrics_func = "accuracy"
 
     def _build_model(self, X: np.array, is_show: bool = False):
+        self._set_params()
+        # os.makedirs("models/metrics", exist_ok=True)
+        # Jbl.save(self.metrics_func, f"models/metrics/{self.run_fold_name}.metrics")
         num_features = X.shape[1]
 
         inputs = keras.Input(shape=(num_features, 1))
@@ -148,3 +149,14 @@ class ModelConv1D(ModelNN):
         if is_show:
             print(model.summary())
         return model
+
+    # def load_model(self, path: str = ModelPath.model):
+    #     self.metrics_func = Jbl.load(f"models/metrics/{self.run_fold_name}.metrics")
+    #     fold_name = self.run_fold_name.split("-")[1]
+    #     custom_objects_key = "auc" if fold_name == "0" else f"auc_{fold_name}"
+
+    #     model_path = os.path.join(path, f"{self.run_fold_name}.model")
+    #     self.model = keras.models.load_model(
+    #         model_path, custom_objects={custom_objects_key: self.metrics_func}
+    #     )
+    #     print(f"{model_path} is loaded")

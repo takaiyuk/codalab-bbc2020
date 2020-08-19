@@ -36,7 +36,7 @@ class Model:
 @dataclass
 class NNParams:
     num_classes: int = 1
-    nb_epoch: int = 10
+    nb_epoch: int = 2
     batch_size: int = 32
 
 
