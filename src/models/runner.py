@@ -10,7 +10,13 @@ from mlflow import log_artifact, log_metric, log_param
 
 from src.config.config import Config
 from src.const import DataPath, ModelPath
-from src.models import Model, ModelConv1D, ModelLGBM, ModelOptunaLGBM
+from src.models import (
+    Model,
+    ModelConv1D,
+    ModelLGBM,
+    ModelOptunaLGBM,
+    ModelRidge,
+)
 from src.models.evaluate import evaluate
 from src.models.kfold import generate_cv
 from src.models.optimize import optimize_threshold
@@ -20,6 +26,7 @@ models_map = {
     "ModelLGBM": ModelLGBM,
     "ModelOptunaLGBM": ModelOptunaLGBM,
     "ModelConv1D": ModelConv1D,
+    "ModelRidge": ModelRidge,
 }
 
 
