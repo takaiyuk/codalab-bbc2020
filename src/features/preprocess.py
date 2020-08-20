@@ -4,6 +4,7 @@ from src.config.config import Config
 from src.const import DataPath
 from src.features.aggregate import aggregate_target
 from src.utils.joblib import Jbl
+from src.utils.utils import calc_dists
 
 
 def _build_features(df: pd.DataFrame, is_train: bool, fe_cfg: Config) -> pd.DataFrame:
@@ -37,6 +38,33 @@ def _filter_frame(
     return df_
 
 
+def _filter_frame_window(df: pd.DataFrame, column: str, window: float) -> pd.DataFrame:
+    # dist_hoge_fuga_agg -> dist_hoge_fuga
+    column_raw = "_".join(column.split("_")[:-1])
+    # col_agg = column.split("_")[-1]
+    col_first = column.split("_")[1]
+    col_second = column.split("_")[2]
+    dfs = []
+    for filename in df.filename.unique():
+        df_file = df[df["filename"] == filename]
+        frame_length = len(df_file)
+        df_file = calc_dists(
+            df_file,
+            (f"{col_first}_x", f"{col_first}_y"),
+            (f"{col_second}_x", f"{col_second}_y"),
+        )
+        argmin = df_file[column_raw].argmin()
+        frame_start = argmin - frame_length * window
+        frame_end = argmin + frame_length * window
+        df_clipped = df_file[
+            (df_file["frame"] >= frame_start) & (df_file["frame"] <= frame_end)
+        ]
+        df_clipped = df_clipped.drop(column_raw, axis=1)
+        dfs.append(df_clipped)
+    df_ = pd.concat(dfs, axis=0, ignore_index=True)
+    return df_
+
+
 def preprocess(fe_cfg: Config):
     fe_name = fe_cfg.basic.name
     target_col = fe_cfg.column.target
@@ -46,9 +74,14 @@ def preprocess(fe_cfg: Config):
     for path, is_train in zip([train_path, test_path], [True, False]):
         df = Jbl.load(path)
         if "frame" in fe_cfg.__annotations__:
-            frame_start_q = fe_cfg.frame.start
-            frame_end_q = fe_cfg.frame.end
-            df = _filter_frame(df, frame_start_q, frame_end_q)
+            if "window" in fe_cfg.frame.__annotations__:
+                frame_column = fe_cfg.frame.column
+                frame_window = fe_cfg.frame.window
+                df = _filter_frame_window(df, frame_column, frame_window)
+            else:
+                frame_start_q = fe_cfg.frame.start
+                frame_end_q = fe_cfg.frame.end
+                df = _filter_frame(df, frame_start_q, frame_end_q)
         df_processed = _build_features(df, is_train, fe_cfg)
         if is_train:
             X = df_processed.drop(target_col, axis=1)

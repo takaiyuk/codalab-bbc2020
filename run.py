@@ -46,6 +46,7 @@ def load_config(args: argparse.Namespace) -> Dict[str, Config]:
         "fe002": config.fe002,
         "fe003": config.fe003,
         "fe004": config.fe004,
+        "fe005": config.fe005,
     }
     run_dict = {
         "run000": config.run000,
@@ -56,6 +57,7 @@ def load_config(args: argparse.Namespace) -> Dict[str, Config]:
         "run005": config.run005,
         "run006": config.run006,
         "run007": config.run007,
+        "run008": config.run008,
     }
     return {
         "blend": blend_dict[blend_name].BlendConfig if blend_name is not None else None,
