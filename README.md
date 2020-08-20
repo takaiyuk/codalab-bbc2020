@@ -14,9 +14,15 @@ test  train
 ```
 
 ### RUN
+
 ```
 $ ./initialize.sh
 $ ./docker/pull.sh && ./docker/run.sh codalab-bbc2020 && ./docker/exec.sh codalab-bbc2020
 root@xxxxxx:/workspace# . /venv/bin/activate
 (venv) root@xxxxxx:/workspace# python run.py --fe fe000 --run run000
+```
+
+- blending
+```
+(venv) root@xxxxxx:/workspace# python run.py --blend blend000
 ```
