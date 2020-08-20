@@ -22,7 +22,7 @@ class Column:
 
 @dataclass
 class Kfold:
-    number: int = 5
+    number: int = 10
     method: str = "stratified"
     str_col: str = ""
     grp_col: str = ""
