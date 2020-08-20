@@ -29,13 +29,22 @@ def load_config(args: argparse.Namespace) -> Dict[str, Config]:
     run_name = args.run
     if "." in run_name:
         run_name = os.path.splitext(run_name)[0]
-    fe_dict = {"fe000": config.fe000, "fe001": config.fe001}
+    fe_dict = {
+        "fe000": config.fe000,
+        "fe001": config.fe001,
+        "fe002": config.fe002,
+        "fe003": config.fe003,
+        "fe004": config.fe004,
+    }
     run_dict = {
         "run000": config.run000,
         "run001": config.run001,
         "run002": config.run002,
         "run003": config.run003,
         "run004": config.run004,
+        "run005": config.run005,
+        "run006": config.run006,
+        "run007": config.run007,
     }
     return {"fe": fe_dict[fe_name].FeConfig, "run": run_dict[run_name].RunConfig}
 

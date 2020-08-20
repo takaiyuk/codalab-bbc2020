@@ -8,20 +8,33 @@ from src.utils.joblib import Jbl
 
 def _build_features(df: pd.DataFrame, is_train: bool, fe_cfg: Config) -> pd.DataFrame:
     feature = fe_cfg.feature
-    if fe_cfg.basic.name in ["fe000", "fe001"]:
-        df_agg_target = pd.DataFrame()
-        if is_train:
-            df_agg_target = aggregate_target(df)
-        df_aggs = []
-        for _, f in feature.__annotations__.items():
-            df_agg_ = f().run(df)
-            df_aggs.append(df_agg_)
-        if is_train:
-            df_aggs.append(df_agg_target)
-        df_agg = pd.concat(df_aggs, axis=1)
-    else:
-        raise Exception(f"{fe_cfg.basic.name} is not implemented")
+    df_agg_target = pd.DataFrame()
+    if is_train:
+        df_agg_target = aggregate_target(df)
+    df_aggs = []
+    for _, f in feature.__annotations__.items():
+        df_agg_ = f().run(df)
+        df_aggs.append(df_agg_)
+    if is_train:
+        df_aggs.append(df_agg_target)
+    df_agg = pd.concat(df_aggs, axis=1)
     return df_agg
+
+
+def _filter_frame(
+    df: pd.DataFrame, frame_start_q: float, frame_end_q: float
+) -> pd.DataFrame:
+    dfs = []
+    for filename in df.filename.unique():
+        df_file = df[df["filename"] == filename]
+        frame_start = df_file.frame.quantile(frame_start_q)
+        frame_end = df_file.frame.quantile(frame_end_q)
+        df_clipped = df_file[
+            (df_file["frame"] >= frame_start) & (df_file["frame"] <= frame_end)
+        ]
+        dfs.append(df_clipped)
+    df_ = pd.concat(dfs, axis=0, ignore_index=True)
+    return df_
 
 
 def preprocess(fe_cfg: Config):
@@ -32,6 +45,10 @@ def preprocess(fe_cfg: Config):
 
     for path, is_train in zip([train_path, test_path], [True, False]):
         df = Jbl.load(path)
+        if "frame" in fe_cfg.__annotations__:
+            frame_start_q = fe_cfg.frame.start
+            frame_end_q = fe_cfg.frame.end
+            df = _filter_frame(df, frame_start_q, frame_end_q)
         df_processed = _build_features(df, is_train, fe_cfg)
         if is_train:
             X = df_processed.drop(target_col, axis=1)

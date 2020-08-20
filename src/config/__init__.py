@@ -1,3 +1,31 @@
-from src.config import fe000, fe001, run000, run001, run002, run003, run004
+from src.config import (
+    fe000,
+    fe001,
+    fe002,
+    fe003,
+    fe004,
+    run000,
+    run001,
+    run002,
+    run003,
+    run004,
+    run005,
+    run006,
+    run007,
+)
 
-__all__ = [fe000, fe001, run000, run001, run002, run003, run004]
+__all__ = [
+    fe000,
+    fe001,
+    fe002,
+    fe003,
+    fe004,
+    run000,
+    run001,
+    run002,
+    run003,
+    run004,
+    run005,
+    run006,
+    run007,
+]
