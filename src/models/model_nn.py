@@ -5,7 +5,7 @@ import keras
 import keras.layers as layers
 import numpy as np
 from keras.callbacks import ReduceLROnPlateau
-from keras.optimizers import Adam
+from keras.optimizers import SGD, Adam
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.metrics import AUC
 
@@ -13,6 +13,7 @@ from src.config.config import Config
 from src.const import ModelPath
 from src.models.model import Model
 from src.models.scaler import SklearnScaler
+from src.models.scheduler import CosineAnnealingScheduler
 from src.models.seed import fix_seeds
 from src.utils.joblib import Jbl
 
@@ -111,6 +112,8 @@ class ModelDense(ModelNN):
         optimizer_name = optimizer.pop("name")
         if optimizer_name == "Adam":
             self.optimizer_func = Adam(**optimizer)
+        elif optimizer_name == "SGD":
+            self.optimizer_func = SGD(**optimizer)
         else:
             raise ValueError(f"Unknown optimizer: {optimizer_name}")
 
@@ -118,16 +121,18 @@ class ModelDense(ModelNN):
         scheduler_name = scheduler.pop("name")
         if scheduler_name == "ReduceLROnPlateau":
             self.scheduler_func = ReduceLROnPlateau(**scheduler)
+        elif scheduler_name == "CosineAnnealing":
+            self.scheduler_func = CosineAnnealingScheduler(**scheduler)
         else:
             raise ValueError(f"Unknown scheduler: {scheduler_name}")
 
-        # metrics = dataclasses.asdict(self.metrics)
-        # metrics_name = metrics.pop("name")
-        # if metrics_name == "AUC":
-        #     self.metrics_func = AUC(**metrics)
-        # else:
-        #     raise ValueError(f"Unknown metrics: {metrics_name}")
-        self.metrics_func = "accuracy"
+        metrics = dataclasses.asdict(self.metrics)
+        metrics_name = metrics.pop("name")
+        if metrics_name == "AUC":
+            self.metrics_func = AUC(**metrics)
+        else:
+            raise ValueError(f"Unknown metrics: {metrics_name}")
+        # self.metrics_func = "accuracy"
 
     def _build_model(self, is_show: bool = False):
         self._set_params()
@@ -160,13 +165,14 @@ class ModelDense(ModelNN):
             print(model.summary())
         return model
 
-    # def load_model(self, path: str = ModelPath.model):
-    #     self.metrics_func = Jbl.load(f"models/metrics/{self.run_fold_name}.metrics")
-    #     fold_name = self.run_fold_name.split("-")[1]
-    #     custom_objects_key = "auc" if fold_name == "0" else f"auc_{fold_name}"
+    def load_model(self, path: str = ModelPath.model):
+        self._set_params()
 
-    #     model_path = os.path.join(path, f"{self.run_fold_name}.model")
-    #     self.model = keras.models.load_model(
-    #         model_path, custom_objects={custom_objects_key: self.metrics_func}
-    #     )
-    #     print(f"{model_path} is loaded")
+        model_path = os.path.join(path, f"{self.run_fold_name}.model")
+        self.model = keras.models.load_model(model_path, compile=False)
+        self.model.compile(
+            loss=self.loss_func,
+            optimizer=self.optimizer_func,
+            metrics=[self.metrics_func],
+        )
+        print(f"{model_path} is loaded")
