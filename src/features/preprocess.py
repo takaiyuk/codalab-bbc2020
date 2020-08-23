@@ -9,12 +9,13 @@ from src.utils.utils import calc_dists
 
 def _build_features(df: pd.DataFrame, is_train: bool, fe_cfg: Config) -> pd.DataFrame:
     feature = fe_cfg.feature
+    agg_methods = fe_cfg.aggregate.methods
     df_agg_target = pd.DataFrame()
     if is_train:
         df_agg_target = aggregate_target(df)
     df_aggs = []
     for _, f in feature.__annotations__.items():
-        df_agg_ = f().run(df)
+        df_agg_ = f(agg_methods=agg_methods).run(df)
         df_aggs.append(df_agg_)
     if is_train:
         df_aggs.append(df_agg_target)

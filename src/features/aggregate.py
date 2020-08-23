@@ -27,8 +27,10 @@ def aggregate_target(df: pd.DataFrame) -> pd.DataFrame:
 
 
 class BaseAggregator:
-    def __init__(self, calc_columns: list):
+    def __init__(self, calc_columns: list, agg_methods: list = None):
+        default_agg_methods = ["mean", "min", "max", "std", "median"]
         self.calc_cols = calc_columns
+        self.agg_methods = default_agg_methods if agg_methods is None else agg_methods
 
     def calc(self, df: pd.DataFrame) -> pd.DataFrame:
         raise NotImplementedError
@@ -44,18 +46,16 @@ class BaseAggregator:
         return df
 
     def aggregate(self, df: pd.DataFrame) -> pd.DataFrame:
-        agg_methods = ["mean", "min", "max", "std", "median"]
-
         df_agg = df.groupby("filename").agg(
-            {col: agg_methods for col in self.calc_cols}
+            {col: self.agg_methods for col in self.calc_cols}
         )
         df_agg.columns = [f"{col[0]}_{col[1]}" for col in df_agg.columns]
         df_agg_shift = df.groupby("filename").agg(
-            {f"{col}_shift": agg_methods for col in self.calc_cols}
+            {f"{col}_shift": self.agg_methods for col in self.calc_cols}
         )
         df_agg_shift.columns = [f"{col[0]}_{col[1]}" for col in df_agg_shift.columns]
         df_agg_shift_diff = df.groupby("filename").agg(
-            {f"{col}_shift_diff": agg_methods for col in self.calc_cols}
+            {f"{col}_shift_diff": self.agg_methods for col in self.calc_cols}
         )
         df_agg_shift_diff.columns = [
             f"{col[0]}_{col[1]}" for col in df_agg_shift_diff.columns
@@ -73,7 +73,7 @@ class BaseAggregator:
 
 @dataclass
 class PlayerDist(BaseAggregator):
-    def __init__(self) -> None:
+    def __init__(self, agg_methods: list = None) -> None:
         dist_cols = [
             "dist_usr_scr",
             "dist_usr_uDF",
@@ -82,7 +82,7 @@ class PlayerDist(BaseAggregator):
             "dist_scr_bal",
             "dist_uDF_bal",
         ]
-        super().__init__(dist_cols)
+        super().__init__(dist_cols, agg_methods)
 
     def calc(self, df: pd.DataFrame) -> pd.DataFrame:
         df = calc_dists(df, BasketColumns.usr, BasketColumns.scr)
@@ -96,7 +96,7 @@ class PlayerDist(BaseAggregator):
 
 @dataclass
 class HoopDist(BaseAggregator):
-    def __init__(self) -> None:
+    def __init__(self, agg_methods: list = None) -> None:
         dist_cols = [
             "dist_usr_hoop",
             "dist_scr_hoop",
@@ -104,7 +104,7 @@ class HoopDist(BaseAggregator):
             "dist_diff_usr_scr_hoop",
             "dist_diff_usr_uDF_hoop",
         ]
-        super().__init__(dist_cols)
+        super().__init__(dist_cols, agg_methods)
 
     def calc(self, df: pd.DataFrame) -> pd.DataFrame:
         df["hoop_x"] = BasketCourt.hoop_xy[0]
@@ -120,11 +120,11 @@ class HoopDist(BaseAggregator):
 
 @dataclass
 class PlayerArea(BaseAggregator):
-    def __init__(self):
+    def __init__(self, agg_methods: list = None):
         area_cols = [
             "player_area",
         ]
-        super().__init__(area_cols)
+        super().__init__(area_cols, agg_methods)
 
     def _calc_triangle_area(self, p0: tuple, p1: tuple, p2: tuple) -> float:
         """http://blog.livedoor.jp/portal8/archives/1619626.html"""
@@ -151,13 +151,13 @@ class PlayerArea(BaseAggregator):
 
 @dataclass
 class PlayerDirection(BaseAggregator):
-    def __init__(self):
+    def __init__(self, agg_methods: list = None):
         direct_cols = [
             "cos_usr_scr",
             "cos_usr_uDF",
             "cos_scr_uDF",
         ]
-        super().__init__(direct_cols)
+        super().__init__(direct_cols, agg_methods)
 
     def _calc_cos_sim(self, v0: np.array, v1: np.array) -> float:
         """https://qiita.com/Qiitaman/items/fa393d93ce8e61a857b1"""
