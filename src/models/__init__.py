@@ -1,6 +1,6 @@
 from src.models.model import Model
 from src.models.model_lgbm import ModelLGBM, ModelOptunaLGBM
-from src.models.model_nn import ModelConv1D, ModelNN
+from src.models.model_nn import ModelDense, ModelNN
 from src.models.model_ridge import ModelRidge
 
 __all__ = [
@@ -8,6 +8,6 @@ __all__ = [
     ModelLGBM,
     ModelOptunaLGBM,
     ModelNN,
-    ModelConv1D,
+    ModelDense,
     ModelRidge,
 ]

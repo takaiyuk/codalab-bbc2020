@@ -25,24 +25,29 @@ class ModelNN(Model):
         self.scheduler = run_cfg.scheduler
         self.metrics = run_cfg.metrics
         self.scaler = None
+        self.columns = []
 
         fix_seeds()
 
     def train(self, tr_x, tr_y, va_x=None, va_y=None):
         # データのセット
         validation = va_x is not None
+        self.columns = tr_x.columns.tolist()
         tr_x_, self.scaler = SklearnScaler.run(tr_x, MinMaxScaler(), is_train=True)
         tr_x_ = self._reshape(tr_x_.values)
+        tr_x_ = {col: tr_x_[:, i] for i, col in enumerate(self.columns)}
         va_x_ = None
         if validation:
             va_x_, _ = SklearnScaler.run(va_x, self.scaler, is_train=False)
             va_x_ = self._reshape(va_x_.values)
+            va_x_ = {col: va_x_[:, i] for i, col in enumerate(self.columns)}
+        # Scalerの保存
         os.makedirs(ModelPath.scaler, exist_ok=True)
         Jbl.save(
             self.scaler, os.path.join(ModelPath.scaler, f"{self.run_fold_name}.scaler")
         )
         # モデルの構築
-        self.model = self._build_model(tr_x_, is_show=False)
+        self.model = self._build_model(is_show=False)
         # 学習
         if validation:
             self.history = self.model.fit(
@@ -51,7 +56,7 @@ class ModelNN(Model):
                 nb_epoch=self.params.nb_epoch,
                 validation_data=(va_x_, va_y),
                 batch_size=self.params.batch_size,
-                verbose=1,
+                verbose=0,
             )
         else:
             self.history = self.model.fit(
@@ -59,15 +64,17 @@ class ModelNN(Model):
                 tr_y,
                 nb_epoch=self.params.nb_epoch,
                 batch_size=self.params.batch_size,
-                verbose=1,
+                verbose=0,
             )
 
     def predict(self, te_x):
         self.scaler = Jbl.load(
             os.path.join(ModelPath.scaler, f"{self.run_fold_name}.scaler")
         )
+        self.columns = te_x.columns.tolist()
         te_x_, _ = SklearnScaler.run(te_x, self.scaler, is_train=False)
         te_x_ = self._reshape(te_x_.values)
+        te_x_ = {col: te_x_[:, i] for i, col in enumerate(self.columns)}
         return self.model.predict(te_x_)
 
     def save_model(self, path: str = ModelPath.model):
@@ -80,16 +87,22 @@ class ModelNN(Model):
         self.model = keras.models.load_model(model_path)
         print(f"{model_path} is loaded")
 
+    def _reshape(self, X: np.array) -> np.array:
+        raise NotImplementedError
+
     def _set_params(self):
         raise NotImplementedError
 
+    def _build_model(self, is_show: bool = False):
+        raise NotImplementedError
 
-class ModelConv1D(ModelNN):
+
+class ModelDense(ModelNN):
     def __init__(self, run_fold_name: str, run_cfg: Config, categorical_features=None):
         super().__init__(run_fold_name, run_cfg, categorical_features)
 
     def _reshape(self, X: np.array) -> np.array:
-        return X.reshape(X.shape[0], X.shape[1], 1)
+        return X
 
     def _set_params(self):
         self.loss_func = self.loss.name
@@ -116,27 +129,24 @@ class ModelConv1D(ModelNN):
         #     raise ValueError(f"Unknown metrics: {metrics_name}")
         self.metrics_func = "accuracy"
 
-    def _build_model(self, X: np.array, is_show: bool = False):
+    def _build_model(self, is_show: bool = False):
         self._set_params()
         # os.makedirs("models/metrics", exist_ok=True)
         # Jbl.save(self.metrics_func, f"models/metrics/{self.run_fold_name}.metrics")
-        num_features = X.shape[1]
 
-        inputs = keras.Input(shape=(num_features, 1))
-        x = layers.Conv1D(256, kernel_size=8, strides=2, padding="same")(inputs)
-        x = layers.Activation("relu")(x)
+        x = []
+        inputs = []
+        for var in self.columns:
+            inp = keras.Input(shape=[1], name=var)
+            x.append((inp))
+            inputs.append(inp)
+        x = layers.concatenate(x)
         x = layers.BatchNormalization()(x)
-        x = layers.Conv1D(128, kernel_size=8, strides=2, padding="same")(x)
-        x = layers.Activation("relu")(x)
+        x = layers.Dense(128, activation="relu", kernel_initializer="he_normal")(x)
         x = layers.BatchNormalization()(x)
-        x = layers.Conv1D(64, kernel_size=8, strides=2, padding="same")(x)
-        x = layers.Activation("relu")(x)
+        x = layers.Dense(64, activation="relu", kernel_initializer="he_normal")(x)
         x = layers.BatchNormalization()(x)
-        x = layers.Bidirectional(layers.LSTM(32))(x)
-        x = layers.Activation("relu")(x)
-        x = layers.Dropout(0.1)(x)
-        x = layers.Dense(8)(x)
-        x = layers.Activation("relu")(x)
+        x = layers.Dense(32, activation="relu", kernel_initializer="he_normal")(x)
         x = layers.BatchNormalization()(x)
         outputs = layers.Dense(self.params.num_classes, activation="sigmoid")(x)
 

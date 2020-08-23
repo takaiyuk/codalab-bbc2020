@@ -5,8 +5,9 @@ from src.config.config import Config
 
 @dataclass
 class Basic:
-    description: str = "Conv1D Classifier"
+    description: str = "ModelDense Classifier"
     exp_name: str = "codalab-bbc2020"
+    fe_name: str = "fe001"
     name: str = "run003"
     mode: str = "training"
     is_debug: bool = False
@@ -30,13 +31,13 @@ class Kfold:
 @dataclass
 class Model:
     eval_metric: str = "auc"
-    name: str = "ModelConv1D"
+    name: str = "ModelDense"
 
 
 @dataclass
 class NNParams:
     num_classes: int = 1
-    nb_epoch: int = 2
+    nb_epoch: int = 3
     batch_size: int = 32
 
 
@@ -48,7 +49,7 @@ class Loss:
 @dataclass
 class Optimizer:
     name: str = "Adam"
-    learning_rate: float = 0.001
+    learning_rate: float = 0.0001
 
 
 @dataclass

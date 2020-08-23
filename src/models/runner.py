@@ -10,13 +10,7 @@ from mlflow import log_artifact, log_metric, log_param
 
 from src.config.config import Config
 from src.const import DataPath, ModelPath
-from src.models import (
-    Model,
-    ModelConv1D,
-    ModelLGBM,
-    ModelOptunaLGBM,
-    ModelRidge,
-)
+from src.models import Model, ModelDense, ModelLGBM, ModelOptunaLGBM, ModelRidge
 from src.models.evaluate import evaluate
 from src.models.kfold import generate_cv
 from src.models.optimize import optimize_threshold
@@ -25,7 +19,7 @@ from src.utils.joblib import Jbl
 models_map = {
     "ModelLGBM": ModelLGBM,
     "ModelOptunaLGBM": ModelOptunaLGBM,
-    "ModelConv1D": ModelConv1D,
+    "ModelDense": ModelDense,
     "ModelRidge": ModelRidge,
 }
 
