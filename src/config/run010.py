@@ -96,7 +96,7 @@ class LGBMOptunaParams:
 @dataclass
 class Selector:
     name: str = "GBDTFeatureSelector"
-    threshold: float = 0.5
+    threshold: float = 0.8
     lgbm_params: dict = field(default_factory=dict)
     lgbm_fit_kwargs: dict = field(default_factory=dict)
 

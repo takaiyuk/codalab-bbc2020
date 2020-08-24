@@ -44,6 +44,7 @@ class ModelPath:
     optuna: str = f"{prefix}/optuna"
     scaler: str = f"{prefix}/scaler"
     prediction: str = f"{prefix}/prediction"
+    selector: str = f"{prefix}/selector"
     submission: str = "submissions"
 
 

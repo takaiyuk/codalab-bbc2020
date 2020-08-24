@@ -222,7 +222,7 @@ class TrainRunner(AbstractRunner):
         if self.advanced and self.advanced.Selector is not None:
             self.logger.info(f"{self.run_name} - start feature_selection")
             self.logger.info(
-                f"{self.run_name} - #features: {len(self.X_train.columns.tolist())}"
+                f"{self.run_name} - #features before selection: {len(self.X_train.columns.tolist())}"
             )
             selector_params = dataclasses.asdict(self.advanced.Selector)
             selector_name = selector_params.pop("name")
@@ -240,9 +240,10 @@ class TrainRunner(AbstractRunner):
             )
             self.X_test = selector.transform(self.X_test)
             self.logger.info(
-                f"{self.run_name} - #features: {len(self.X_train.columns.tolist())}"
+                f"{self.run_name} - #features after selection: {len(self.X_train.columns.tolist())}"
             )
             self.logger.info(f"{self.run_name} - end feature_selection")
+            Jbl.save(selector, f"{ModelPath.selector}/{self.run_name}.selector")
 
         # 各foldで学習を行う
         for i_fold in range(self.cv.n_splits):
@@ -343,8 +344,12 @@ class PredictRunner(AbstractRunner):
 
         self.logger.info(f"{self.run_name} - start prediction cv")
         X_test = self.X_test.copy()
-        preds = []
 
+        if self.advanced and self.advanced.Selector is not None:
+            selector = Jbl.load(f"{ModelPath.selector}/{self.run_name}.selector")
+            X_test = selector.transform(X_test)
+
+        preds = []
         show_feature_importance = "LGBM" in str(self.model_cls)
         feature_importances = pd.DataFrame()
 
