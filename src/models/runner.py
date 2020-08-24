@@ -1,3 +1,4 @@
+import dataclasses
 from dataclasses import dataclass
 from typing import Dict, List, Union
 
@@ -15,6 +16,7 @@ from src.models.evaluate import evaluate
 from src.models.kfold import generate_cv
 from src.models.optimize import optimize_threshold
 from src.utils.joblib import Jbl
+from xfeat.selector import GBDTFeatureSelector
 
 models_map = {
     "ModelLGBM": ModelLGBM,
@@ -51,6 +53,7 @@ class AbstractRunner:
             PseudoRunner: PseudoRunner = run_cfg.pseudo if "pseudo" in run_cfg.__annotations__ else None
             ResRunner: ResRunner = run_cfg.res if "res" in run_cfg.__annotations__ else None
             AdversarialValidation: AdversarialValidation = run_cfg.adcersarial_validation if "adcersarial_validation" in run_cfg.__annotations__ else None
+            Selector: Selector = run_cfg.selector if "selector" in run_cfg.__annotations__ else None
 
         self.advanced = advanced
 
@@ -214,6 +217,32 @@ class TrainRunner(AbstractRunner):
             X_test.drop("target", axis=1, inplace=True)
             self.X_train = X_train
             self.y_train = y_train
+
+        # 特徴量選択
+        if self.advanced and self.advanced.Selector is not None:
+            self.logger.info(f"{self.run_name} - start feature_selection")
+            self.logger.info(
+                f"{self.run_name} - #features: {len(self.X_train.columns.tolist())}"
+            )
+            selector_params = dataclasses.asdict(self.advanced.Selector)
+            selector_name = selector_params.pop("name")
+            selector = None
+            if selector_name == "GBDTFeatureSelector":
+                selector = GBDTFeatureSelector(
+                    input_cols=self.X_train.columns.tolist(),
+                    target_col=self.column.target,
+                    **selector_params,
+                )
+            else:
+                ValueError(f"{selector_name} is not implemented")
+            self.X_train = selector.fit_transform(
+                pd.concat([self.X_train, self.y_train], axis=1)
+            )
+            self.X_test = selector.transform(self.X_test)
+            self.logger.info(
+                f"{self.run_name} - #features: {len(self.X_train.columns.tolist())}"
+            )
+            self.logger.info(f"{self.run_name} - end feature_selection")
 
         # 各foldで学習を行う
         for i_fold in range(self.cv.n_splits):

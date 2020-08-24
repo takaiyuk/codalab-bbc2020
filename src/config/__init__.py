@@ -17,6 +17,7 @@ from src.config import (
     run007,
     run008,
     run009,
+    run010,
 )
 
 __all__ = [
@@ -38,4 +39,5 @@ __all__ = [
     run007,
     run008,
     run009,
+    run010,
 ]
