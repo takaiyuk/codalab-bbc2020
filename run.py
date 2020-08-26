@@ -40,6 +40,7 @@ def load_config(args: argparse.Namespace) -> Dict[str, Config]:
     blend_dict = {
         "blend000": config.blend000,
         "blend001": config.blend001,
+        "blend002": config.blend002,
     }
     fe_dict = {
         "fe000": config.fe000,

@@ -1,6 +1,7 @@
 from src.config import (
     blend000,
     blend001,
+    blend002,
     fe000,
     fe001,
     fe002,
@@ -26,6 +27,7 @@ from src.config import (
 __all__ = [
     blend000,
     blend001,
+    blend002,
     fe000,
     fe001,
     fe002,
