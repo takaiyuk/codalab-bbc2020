@@ -1,4 +1,5 @@
 import dataclasses
+import os
 from dataclasses import dataclass
 from typing import Dict, List, Union
 
@@ -243,6 +244,8 @@ class TrainRunner(AbstractRunner):
                 f"{self.run_name} - #features after selection: {len(self.X_train.columns.tolist())}"
             )
             self.logger.info(f"{self.run_name} - end feature_selection")
+
+            os.makedirs(f"{ModelPath.selector}", exist_ok=True)
             Jbl.save(selector, f"{ModelPath.selector}/{self.run_name}.selector")
 
         # 各foldで学習を行う

@@ -9,6 +9,7 @@ import pandas as pd
 from src.const import ModelPath
 from src.models.model import Model
 from src.utils.joblib import Jbl
+from src.utils.logger import Logger
 
 
 class ModelLGBM(Model):
@@ -105,7 +106,7 @@ class ModelOptunaLGBM(ModelLGBM):
                 params, lgb_train, num_round, valid_sets=[lgb_train], verbose_eval=500,
             )
         best_params = self.model.params
-        print(f"Optuna Best Params: {best_params}")
+        Logger().info(f"Optuna Best Params: {best_params}")
         with open(
             f"{ModelPath.optuna}/{self.run_fold_name}_best_params.json", "w"
         ) as f:
