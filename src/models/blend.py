@@ -5,7 +5,7 @@ from typing import Dict
 import pandas as pd
 
 from src.config.config import Config
-from src.const import DataPath, ModelPath
+from src.const import ModelPath
 from src.models.kfold import generate_cv
 from src.models.runner import PredictRunner, TrainRunner, models_map
 from src.utils.joblib import Jbl
@@ -38,6 +38,7 @@ class BlendTrainRunner(TrainRunner):
             PseudoRunner: PseudoRunner = None
             ResRunner: ResRunner = None
             AdversarialValidation: AdversarialValidation = None
+            Selector: Selector = None
 
         self.advanced = advanced
 
@@ -92,6 +93,7 @@ class BlendPredictRunner(PredictRunner):
             PseudoRunner: PseudoRunner = None
             ResRunner: ResRunner = None
             AdversarialValidation: AdversarialValidation = None
+            Selector: Selector = None
 
         self.advanced = advanced
 
