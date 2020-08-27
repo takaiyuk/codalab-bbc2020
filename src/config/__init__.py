@@ -10,6 +10,7 @@ from src.config import (
     fe005,
     fe006,
     fe007,
+    fe008,
     run000,
     run001,
     run002,
@@ -22,6 +23,7 @@ from src.config import (
     run009,
     run010,
     run011,
+    run012,
 )
 
 __all__ = [
@@ -36,6 +38,7 @@ __all__ = [
     fe005,
     fe006,
     fe007,
+    fe008,
     run000,
     run001,
     run002,
@@ -48,4 +51,5 @@ __all__ = [
     run009,
     run010,
     run011,
+    run012,
 ]

@@ -193,3 +193,23 @@ class PlayerDirection(BaseAggregator):
             )
         ]
         return df
+
+
+@dataclass
+class PlayerDistDiff(BaseAggregator):
+    def __init__(self, agg_methods: list = None) -> None:
+        dist_cols = [
+            "dist_usr_scr_diff_dist_usr_uDF",
+            "dist_usr_scr_div_dist_usr_uDF",
+        ]
+        super().__init__(dist_cols, agg_methods)
+
+    def calc(self, df: pd.DataFrame) -> pd.DataFrame:
+        df["hoop_x"] = BasketCourt.hoop_xy[0]
+        df["hoop_y"] = BasketCourt.hoop_xy[1]
+
+        df = calc_dists(df, BasketColumns.usr, BasketColumns.scr)
+        df = calc_dists(df, BasketColumns.usr, BasketColumns.uDF)
+        df["dist_usr_scr_diff_dist_usr_uDF"] = df["dist_usr_scr"] - df["dist_usr_uDF"]
+        df["dist_usr_scr_div_dist_usr_uDF"] = df["dist_usr_scr"] / df["dist_usr_uDF"]
+        return df
