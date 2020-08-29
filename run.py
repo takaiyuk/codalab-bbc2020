@@ -68,6 +68,7 @@ def load_config(args: argparse.Namespace) -> Dict[str, Config]:
         "run011": config.run011,
         "run012": config.run012,
         "run013": config.run013,
+        "run014": config.run014,
     }
     return {
         "blend": blend_dict[blend_name].BlendConfig if blend_name is not None else None,
@@ -101,8 +102,11 @@ def main(cfgs: Dict[str, Config], is_overwrite: bool):
             FeatureRunner(cfgs).run()
         else:
             logger.info(f'{cfgs["fe"].basic.name} - Skip processing features')
-        logger.info(f'{cfgs["run"].basic.name} - Process training')
-        TrainRunner(cfgs, logger).run_train_cv()
+        if "pretrain" not in cfgs["run"].__annotations__:
+            logger.info(f'{cfgs["run"].basic.name} - Process training')
+            TrainRunner(cfgs, logger).run_train_cv()
+        else:
+            logger.info(f'{cfgs["run"].basic.name} - Skip training')
         logger.info(f'{cfgs["run"].basic.name} - Process prediction')
         PredictRunner(cfgs, logger).run_predict_cv()
         logger.info(f'{cfgs["run"].basic.name} - Process submission')

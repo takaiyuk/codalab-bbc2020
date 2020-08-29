@@ -48,6 +48,9 @@ class AbstractRunner:
         self.kfold = run_cfg.kfold
         self.evaluation_metric = run_cfg.model.eval_metric
         self.logger = logger
+        self.pretrain = (
+            run_cfg.pretrain if "pretrain" in run_cfg.__annotations__ else None
+        )
 
         @dataclass
         class advanced:
@@ -359,7 +362,12 @@ class PredictRunner(AbstractRunner):
         # 各foldのモデルで予測を行う
         for i_fold in range(self.cv.n_splits):
             self.logger.info(f"{self.run_name} - start prediction fold:{i_fold}")
-            model = self.build_model(i_fold)
+            if self.pretrain is None:
+                model = self.build_model(i_fold)
+            else:
+                model = self.model_cls(
+                    f"{self.pretrain.run_name}-{i_fold}", self.run_cfg, self.cat_cols
+                )
             model.load_model()
             pred = model.predict(X_test)
             # 後処理
@@ -375,9 +383,14 @@ class PredictRunner(AbstractRunner):
         pred_avg = np.mean(preds, axis=0)
 
         # 閾値で2値化
-        best_threshold = Jbl.load(
-            f"{ModelPath.prediction}/{self.run_name}-best-threshold.jbl"
-        )
+        if self.pretrain is None:
+            best_threshold = Jbl.load(
+                f"{ModelPath.prediction}/{self.run_name}-best-threshold.jbl"
+            )
+        else:
+            best_threshold = Jbl.load(
+                f"{ModelPath.prediction}/{self.pretrain.run_name}-best-threshold.jbl"
+            )
         pred_avg_binarized = np.where(pred_avg > best_threshold, 1, 0)
 
         # 予測結果の保存
