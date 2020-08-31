@@ -117,5 +117,6 @@ target/
 # Mypy cache
 .mypy_cache/
 
-# Exclude .gitkeep
+# Exclude
 !.gitkeep
+!notebooks/gif/*.gif
