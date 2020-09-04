@@ -26,3 +26,21 @@ root@xxxxxx:/workspace# . /venv/bin/activate
 ```
 (venv) root@xxxxxx:/workspace# python run.py --blend blend000
 ```
+
+## Fun Things
+
+### Visualization
+
+Using [DrawNBACourt](https://github.com/takaiyuk/codalab-bbc2020/blob/master/src/utils/visualize.py#L20), which is insipired by [BasketballAnalyzeR](https://github.com/sndmrc/BasketballAnalyzeR/blob/master/R/drawNBAcourt.R), and matplotlib animation, we can get gif images of each play.
+
+- positive example
+
+![negative example](https://raw.githubusercontent.com/takaiyuk/codalab-bbc2020/master/notebooks/gif/0000.gif)
+
+- negative example
+
+![negative example](https://raw.githubusercontent.com/takaiyuk/codalab-bbc2020/master/notebooks/gif/0401.gif)
+
+## Ref.
+
+- [Basketball Behavior Challenge BBC2020 で4チーム中2位に - Tak's Notebook](https://takaishikawa42.hatenablog.com/entry/2020/09/03/234551)
